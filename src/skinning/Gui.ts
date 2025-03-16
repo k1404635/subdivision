@@ -214,6 +214,14 @@ export class GUI implements IGUI {
           break;
         }
       }
+    } else { // hovering
+      let ndc: Vec4 = new Vec4([ (2 * x / this.width) - 1, -1 * ((2 * y / this.viewPortHeight) - 1), -1, 0]);
+      let V_inv: Mat4 = new Mat4();
+      let P_inv: Mat4 = new Mat4();
+      this.viewMatrix().inverse(V_inv);
+      this.projMatrix().inverse(P_inv);
+      let q_world: Vec4 = (ndc.multiplyMat4(P_inv).scale(1.0 / this.camera.pos[3])).multiplyMat4(V_inv);
+      let ray: Vec4 = q_world.subtract(new Vec4([this.camera.pos[0], this.camera.pos[1], this.camera.pos[2], 0]));
     } 
     // TODO: Add logic here:
     // 1) To highlight a bone, if the mouse is hovering over a bone;
