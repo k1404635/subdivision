@@ -48,6 +48,10 @@ export class Bone {
   public position: Vec3; // current position of the bone's joint *in world coordinates*. Used by the provided skeleton shader, so you need to keep this up to date.
   public endpoint: Vec3; // current position of the bone's second (non-joint) endpoint, in world coordinates
   public rotation: Quat; // current orientation of the joint *with respect to world coordinates*
+  private U: Mat4; // undeformed matrix: going from local to world coordinates
+  private D: Mat4; // deformed matrix: going from local to world coordinates
+  private R: Mat4; // rotation matrix
+  private T: Mat4; // translation matrix from parent joint to this joint
 
   constructor(bone: BoneLoader) {
     this.parent = bone.parent;
@@ -55,6 +59,55 @@ export class Bone {
     this.position = bone.position.copy();
     this.endpoint = bone.endpoint.copy();
     this.rotation = bone.rotation.copy();
+    this.R.setIdentity();
+    this.T.setIdentity();
+  }
+
+  public getDMatrix(): Mat4{
+    return this.D;
+  }
+
+  public setDMatrix(D: Mat4, bones: Bone[]): void{
+    this.D = this.R.multiply(this.T).multiply(D);
+    for (let i: number = 0; i < this.children.length; i++) {
+      let curr: Bone = bones[this.children[i]];
+      curr.setDMatrix(this.D, bones);
+    }
+  }
+
+  public setUMatrix(U: Mat4, bones: Bone[]): void{
+    this.U = this.T.multiply(U);
+    for (let i: number = 0; i < this.children.length; i++) {
+      let curr: Bone = bones[this.children[i]];
+      curr.setUMatrix(this.U, bones);
+    }
+  }
+
+  public getUMatrix(): Mat4{
+    return this.U;
+  }
+  
+  public setRMatrix(mat: Mat4): void{
+    this.R = mat;
+  }
+
+  public getRMatrix(): Mat4{
+    return this.R;
+  }
+
+  public setTMatrix(bones: Bone[], root: boolean) {
+    if(!root) {
+      let translation: Vec3 = this.position.subtract(bones[this.parent].position);
+      this.T = new Mat4([1, 0, 0, translation.x,
+                        0, 1, 0, translation.y,
+                        0, 0, 1, translation.z,
+                        0, 0, 0, 1
+                      ]);
+    }
+    for (let i: number = 0; i < this.children.length; i++) {
+      let curr: Bone = bones[this.children[i]];
+      curr.setTMatrix(bones, false);
+    }
   }
 }
 
@@ -79,6 +132,17 @@ export class Mesh {
     mesh.bones.forEach(bone => {
       this.bones.push(new Bone(bone));
     });
+    this.bones.forEach(bone => {
+      if(bone.parent == -1) { // if root
+        let array: number[] = [1, 0, 0, bone.position.x,
+                              0, 1, 0, bone.position.y,
+                              0, 0, 1, bone.position.z,
+                              0, 0, 0, 1];
+        bone.setTMatrix(this.bones, true);
+        bone.setDMatrix(new Mat4(array), this.bones); 
+        bone.setUMatrix(new Mat4(array), this.bones);
+      }
+    })
     this.materialName = mesh.materialName;
     this.imgSrc = null;
     this.boneIndices = Array.from(mesh.boneIndices);
