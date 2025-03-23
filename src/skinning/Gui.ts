@@ -4,6 +4,7 @@ import { SkinningAnimation } from "./App.js";
 import { Mat4, Vec3, Vec4, Vec2, Mat2, Quat } from "../lib/TSM.js";
 import { Bone } from "./Scene.js";
 import { RenderPass } from "../lib/webglutils/RenderPass.js";
+import { Scene } from "../lib/threejs/src/Three.js";
 
 /**
  * Might be useful for designing any animation GUI
@@ -215,13 +216,70 @@ export class GUI implements IGUI {
         }
       }
     } else { // hovering
+      let bones: Bone[] = this.animation.getScene().meshes[0].bones;
       let ndc: Vec4 = new Vec4([ (2 * x / this.width) - 1, -1 * ((2 * y / this.viewPortHeight) - 1), -1, 0]);
       let V_inv: Mat4 = new Mat4();
       let P_inv: Mat4 = new Mat4();
       this.viewMatrix().inverse(V_inv);
       this.projMatrix().inverse(P_inv);
-      let q_world: Vec4 = (ndc.multiplyMat4(P_inv).scale(1.0 / this.camera.pos[3])).multiplyMat4(V_inv);
-      let ray: Vec4 = q_world.subtract(new Vec4([this.camera.pos[0], this.camera.pos[1], this.camera.pos[2], 0]));
+      let q_world: Vec4 = new Vec4();
+      ndc.multiplyMat4(P_inv, q_world);
+      (q_world.scale(1.0 / this.camera.pos[3])).multiplyMat4(V_inv);
+      let ray: Vec4 = new Vec4();
+      let ray_origin: Vec4 = new Vec4([this.camera.pos[0], this.camera.pos[1], this.camera.pos[2], 1.0]);
+      q_world.subtract(ray_origin, ray);
+      ray[3] = 0.0;
+
+      let min_t: number = Number.MAX_SAFE_INTEGER;
+      let bone: Bone | null = null;
+      bones.forEach(curr => {
+        // do whatever we need to for each bone here
+        let boneD: Mat4 = curr.getDMatrix();
+        let Dinv: Mat4 = new Mat4();
+        boneD.inverse(Dinv);
+        
+        let origin_local: Vec4 = new Vec4();
+        Dinv.multiplyVec4(ray_origin, origin_local);
+        let dir_local: Vec4 = new Vec4();
+        Dinv.multiplyVec4(ray, dir_local);
+        dir_local.normalize();
+
+        let a: number = dir_local.x * dir_local.x + dir_local.z * dir_local.z;
+        let b: number = 2 * (dir_local.x * origin_local.x + dir_local.z * origin_local.z);
+        let c: number = origin_local.x * origin_local.x + origin_local.z * origin_local.z - (1.0 * 1.0); // radius = 1.0
+
+        let discriminant: number = b * b - 4 * a * c;
+        let height: number = Vec3.distance(curr.endpoint, curr.position);
+        let do_t2: boolean = false;
+        if (discriminant >= 0) {
+          let t1: number = (-b - Math.sqrt(discriminant)) / (2 * a);
+          if (t1 >= 0) {
+            let y1: number = origin_local.y + (dir_local.y * t1);
+            if (y1 >= 0 && y1 <= height) {
+              if (t1 < min_t) {
+                min_t = t1;
+                bone = curr;
+              }
+            } else {
+              do_t2 = true;
+            }
+          } else {
+            do_t2 = true;
+          }
+          
+          if (do_t2) {
+            let t2: number = (-b + Math.sqrt(discriminant)) / (2 * a);
+            let y2: number = origin_local.y + (dir_local.y * t2);
+            if (t2 < min_t && y2 >= 0 && y2 <= height) {
+              min_t = t2;
+              bone = curr;
+            }
+          }
+        }
+      });
+
+      // highlight bone
+      
     } 
     // TODO: Add logic here:
     // 1) To highlight a bone, if the mouse is hovering over a bone;
