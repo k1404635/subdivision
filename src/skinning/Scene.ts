@@ -59,6 +59,8 @@ export class Bone {
     this.position = bone.position.copy();
     this.endpoint = bone.endpoint.copy();
     this.rotation = bone.rotation.copy();
+    this.R = new Mat4();
+    this.T = new Mat4();
     this.R.setIdentity();
     this.T.setIdentity();
   }
@@ -68,7 +70,13 @@ export class Bone {
   }
 
   public setDMatrix(D: Mat4, bones: Bone[]): void{
-    this.D = this.R.multiply(this.T).multiply(D);
+    this.D = new Mat4();
+    // console.log("Before multiplication, D matrix:", this.D.all());
+    this.R.multiply(this.T, this.D);
+    // console.log("After RxT, D matrix:", this.D.all());
+    this.D.multiply(D, this.D);
+    // console.log("After Dxthis.D, D matrix:", this.D.all());
+    // this.R.multiply(this.T, this.D).multiply(D, this.D);
     for (let i: number = 0; i < this.children.length; i++) {
       let curr: Bone = bones[this.children[i]];
       curr.setDMatrix(this.D, bones);
@@ -76,7 +84,8 @@ export class Bone {
   }
 
   public setUMatrix(U: Mat4, bones: Bone[]): void{
-    this.U = this.T.multiply(U);
+    this.U = new Mat4();
+    this.T.multiply(U, this.U);
     for (let i: number = 0; i < this.children.length; i++) {
       let curr: Bone = bones[this.children[i]];
       curr.setUMatrix(this.U, bones);
@@ -97,7 +106,8 @@ export class Bone {
 
   public setTMatrix(bones: Bone[], root: boolean) {
     if(!root) {
-      let translation: Vec3 = this.position.subtract(bones[this.parent].position);
+      let translation: Vec3 = new Vec3();
+      this.position.subtract(bones[this.parent].position, translation);
       this.T = new Mat4([1, 0, 0, translation.x,
                         0, 1, 0, translation.y,
                         0, 0, 1, translation.z,
