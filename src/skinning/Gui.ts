@@ -250,11 +250,14 @@ export class GUI implements IGUI {
       let min_t: number = Number.MAX_SAFE_INTEGER;
       this.selectedBone = -1;
       bones.forEach((curr, index) => {
+        console.log ("Bone Index: " + index);
         let boneD: Mat4 = curr.getDMatrix();
         // console.log("boneD Matrix: ", boneD.all());
 
         let Dinv: Mat4 = new Mat4();
         boneD.inverse(Dinv);
+        console.log("D: ", boneD.all());
+        console.log("Dinv: ", Dinv.all());
         
         // console.log("ray origin: ", ray_origin.xyzw);
         // console.log("ray dir: ", ray.xyzw);
@@ -262,35 +265,77 @@ export class GUI implements IGUI {
         let origin_local: Vec4 = new Vec4();
         Dinv.multiplyVec4(ray_origin, origin_local);
 
-        console.log("origin_local: ", origin_local.xyzw);
-        console.log("origin_global: ", ray_origin.xyzw);
+        // console.log("origin_local: ", origin_local.xyzw);
+        // console.log("origin_global: ", ray_origin.xyzw);
         let dir_local: Vec4 = new Vec4();
         Dinv.multiplyVec4(ray, dir_local);
         dir_local.normalize();
-        console.log("dir_local: ", dir_local.xyzw);
-        console.log("dir_global: ", ray.xyzw);
+        // console.log("dir_local: ", dir_local.xyzw);
+        // console.log("dir_global: ", ray.xyzw);
 
         let joint_local: Vec4 = new Vec4();
         Dinv.multiplyVec4(new Vec4([curr.position.x, curr.position.y, curr.position.z, 1.0]), joint_local);
         let endpoint_local: Vec4 = new Vec4();
         Dinv.multiplyVec4(new Vec4([curr.endpoint.x, curr.endpoint.y, curr.endpoint.z, 1.0]), endpoint_local);
 
-        let min_y: number = Math.min(joint_local.y, endpoint_local.y);
-        let max_y: number = Math.max(joint_local.y, endpoint_local.y);
         // let height: number = Vec3.distance(curr.position, curr.endpoint);
         // console.log ("height:" + height);
         // console.log("joint local: ", joint_local.xyz);
         // console.log("endpoint local: ", endpoint_local.xyz);
-        console.log("joint world: ", curr.position.xyz);
-        console.log("endpoint world: ", curr.endpoint.xyz);
+        // console.log("joint world: ", curr.position.xyz);
+        // console.log("endpoint world: ", curr.endpoint.xyz);
         // console.log("min_y: ", min_y);
         // console.log("max_y: ", max_y);
+
+        // align the bone to the y-axis
+        console.log("before joint local: ", joint_local.xyz);
+        console.log("before endpoint local: ", endpoint_local.xyz);
+        let bone_vec: Vec4 = new Vec4();
+        bone_vec = joint_local.subtract(endpoint_local, bone_vec);
+        bone_vec.w = 1.0;
+        let bone_dir = new Vec3(bone_vec.xyz);
+        bone_dir.normalize();
+        let target_dir: Vec3 = new Vec3([0, 1, 0]);
+        console.log ("bone dir: ", bone_dir.xyz);
+        console.log ("target dir: ", target_dir.xyz);
+        let rotation_axis: Vec3 = Vec3.cross(bone_dir, target_dir);
+        console.log ("rotation axis: ", rotation_axis.xyz);
+        if (!(rotation_axis.x == 0 && rotation_axis.y == 0 && rotation_axis.z == 0)) {
+          rotation_axis.normalize();
+          let rotation_angle: number = Math.acos(Vec3.dot(bone_dir, target_dir));
+          let quat: Quat = new Quat();
+          Quat.fromAxisAngle(rotation_axis, rotation_angle, quat);
+          let rotation_matrix: Mat4 = quat.toMat4();
+
+          console.log("ROTATION MATRIX:", rotation_matrix.all());
+
+          endpoint_local.multiplyMat4(rotation_matrix);
+          joint_local.multiplyMat4(rotation_matrix);
+
+
+          // let aligned: Vec3 = Vec3.cross(new Vec3(dir_local.xyz), target_dir);
+          // if (!(aligned.x == 0 && aligned.y == 0 && aligned.z == 0)) {
+          //   dir_local.multiplyMat4(rotation_matrix);
+          //   origin_local.multiplyMat4(rotation_matrix);
+          // }
+          console.log ("before dir local: ", dir_local.xyzw);
+          console.log ("before origin local: ", origin_local.xyzw);
+          dir_local.multiplyMat4(rotation_matrix);
+          origin_local.multiplyMat4(rotation_matrix);
+          console.log ("dir local: ", dir_local.xyzw);
+          console.log ("origin local: ", origin_local.xyzw);
+        }
+        console.log("joint local: ", joint_local.xyz);
+        console.log("endpoint local: ", endpoint_local.xyz);
 
         let a: number = dir_local.x * dir_local.x + dir_local.z * dir_local.z;
         // console.log("a: " + a + "\n");
         let b: number = 2 * (dir_local.x * origin_local.x + dir_local.z * origin_local.z);
         // console.log("b: " + b + "\n");
-        let c: number = origin_local.x * origin_local.x + origin_local.z * origin_local.z - (0.05 * 0.05); // radius = 0.1
+        let c: number = origin_local.x * origin_local.x + origin_local.z * origin_local.z - (0.05 * 0.05); // radius = 0.05
+
+        let min_y: number = Math.min(joint_local.y, endpoint_local.y);
+        let max_y: number = Math.max(joint_local.y, endpoint_local.y);
         // console.log("c: " + c + "\n");
 
         let discriminant: number = b * b - 4 * a * c;
@@ -327,8 +372,9 @@ export class GUI implements IGUI {
             }
           }
         }
-        // console.log("Selected Bone Index: " + this.selectedBone + "\n");
-      });      
+        console.log ("<========================>");
+      });  
+      console.log("Selected Bone Index: " + this.selectedBone + "\n");   
     } 
     // TODO: Add logic here:
     // 1) To highlight a bone, if the mouse is hovering over a bone;

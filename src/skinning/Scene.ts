@@ -108,11 +108,16 @@ export class Bone {
     if(!root) {
       let translation: Vec3 = new Vec3();
       this.position.subtract(bones[this.parent].position, translation);
-      this.T = new Mat4([1, 0, 0, translation.x,
-                        0, 1, 0, translation.y,
-                        0, 0, 1, translation.z,
-                        0, 0, 0, 1
-                      ]);
+      // this.T = new Mat4([1, 0, 0, translation.x,
+      //                   0, 1, 0, translation.y,
+      //                   0, 0, 1, translation.z,
+      //                   0, 0, 0, 1
+      //                 ]);
+      this.T = new Mat4([1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        translation.x, translation.y, translation.z, 1
+      ]);
     }
     for (let i: number = 0; i < this.children.length; i++) {
       let curr: Bone = bones[this.children[i]];
