@@ -17,6 +17,7 @@ export class GUI {
      * @param sponge required for some of the controls
      */
     constructor(canvas, animation) {
+        this.selectedBone = -1;
         this.hoverX = 0;
         this.hoverY = 0;
         this.height = canvas.height;
@@ -167,13 +168,13 @@ export class GUI {
             let min_t = Number.MAX_SAFE_INTEGER;
             this.selectedBone = -1;
             bones.forEach((curr, index) => {
-                console.log("Bone Index: " + index);
+                // console.log ("Bone Index: " + index);
                 let boneD = curr.getDMatrix();
                 // console.log("boneD Matrix: ", boneD.all());
                 let Dinv = new Mat4();
                 boneD.inverse(Dinv);
-                console.log("D: ", boneD.all());
-                console.log("Dinv: ", Dinv.all());
+                // console.log("D: ", boneD.all());
+                // console.log("Dinv: ", Dinv.all());
                 // console.log("ray origin: ", ray_origin.xyzw);
                 // console.log("ray dir: ", ray.xyzw);
                 let origin_local = new Vec4();
@@ -198,25 +199,25 @@ export class GUI {
                 // console.log("min_y: ", min_y);
                 // console.log("max_y: ", max_y);
                 // align the bone to the y-axis
-                console.log("before joint local: ", joint_local.xyz);
-                console.log("before endpoint local: ", endpoint_local.xyz);
+                // console.log("before joint local: ", joint_local.xyz);
+                // console.log("before endpoint local: ", endpoint_local.xyz);
                 let bone_vec = new Vec4();
                 bone_vec = joint_local.subtract(endpoint_local, bone_vec);
                 bone_vec.w = 1.0;
                 let bone_dir = new Vec3(bone_vec.xyz);
                 bone_dir.normalize();
                 let target_dir = new Vec3([0, 1, 0]);
-                console.log("bone dir: ", bone_dir.xyz);
-                console.log("target dir: ", target_dir.xyz);
+                // console.log ("bone dir: ", bone_dir.xyz);
+                // console.log ("target dir: ", target_dir.xyz);
                 let rotation_axis = Vec3.cross(bone_dir, target_dir);
-                console.log("rotation axis: ", rotation_axis.xyz);
+                // console.log ("rotation axis: ", rotation_axis.xyz);
                 if (!(rotation_axis.x == 0 && rotation_axis.y == 0 && rotation_axis.z == 0)) {
                     rotation_axis.normalize();
                     let rotation_angle = Math.acos(Vec3.dot(bone_dir, target_dir));
                     let quat = new Quat();
                     Quat.fromAxisAngle(rotation_axis, rotation_angle, quat);
                     let rotation_matrix = quat.toMat4();
-                    console.log("ROTATION MATRIX:", rotation_matrix.all());
+                    // console.log("ROTATION MATRIX:", rotation_matrix.all());
                     endpoint_local.multiplyMat4(rotation_matrix);
                     joint_local.multiplyMat4(rotation_matrix);
                     // let aligned: Vec3 = Vec3.cross(new Vec3(dir_local.xyz), target_dir);
@@ -224,15 +225,15 @@ export class GUI {
                     //   dir_local.multiplyMat4(rotation_matrix);
                     //   origin_local.multiplyMat4(rotation_matrix);
                     // }
-                    console.log("before dir local: ", dir_local.xyzw);
-                    console.log("before origin local: ", origin_local.xyzw);
+                    // console.log ("before dir local: ", dir_local.xyzw);
+                    // console.log ("before origin local: ", origin_local.xyzw);
                     dir_local.multiplyMat4(rotation_matrix);
                     origin_local.multiplyMat4(rotation_matrix);
-                    console.log("dir local: ", dir_local.xyzw);
-                    console.log("origin local: ", origin_local.xyzw);
+                    // console.log ("dir local: ", dir_local.xyzw);
+                    // console.log ("origin local: ", origin_local.xyzw);
                 }
-                console.log("joint local: ", joint_local.xyz);
-                console.log("endpoint local: ", endpoint_local.xyz);
+                // console.log("joint local: ", joint_local.xyz);
+                // console.log("endpoint local: ", endpoint_local.xyz);
                 let a = dir_local.x * dir_local.x + dir_local.z * dir_local.z;
                 // console.log("a: " + a + "\n");
                 let b = 2 * (dir_local.x * origin_local.x + dir_local.z * origin_local.z);
@@ -247,9 +248,9 @@ export class GUI {
                 if (discriminant >= 0) {
                     let t1 = (-b - Math.sqrt(discriminant)) / (2 * a);
                     if (t1 >= 0) {
-                        console.log("t1: " + t1 + "\n");
+                        // console.log("t1: " + t1 + "\n");
                         let y1 = origin_local.y + (dir_local.y * t1);
-                        console.log("y1: ", y1);
+                        // console.log("y1: ", y1);
                         // if (y1 <= 0 && y1 <= height) {
                         if (y1 >= min_y && y1 <= max_y) {
                             if (t1 < min_t) {
@@ -266,9 +267,9 @@ export class GUI {
                     }
                     if (do_t2) {
                         let t2 = (-b + Math.sqrt(discriminant)) / (2 * a);
-                        console.log("t2: " + t2 + "\n");
+                        // console.log("t2: " + t2 + "\n");
                         let y2 = origin_local.y + (dir_local.y * t2);
-                        console.log("y2: ", y2);
+                        // console.log("y2: ", y2);
                         // if (t2 < min_t && y2 >= 0 && y2 <= height) {
                         if (t2 < min_t && y2 >= min_y && y2 <= max_y) {
                             min_t = t2;
@@ -276,9 +277,9 @@ export class GUI {
                         }
                     }
                 }
-                console.log("<========================>");
+                // console.log ("<========================>");
             });
-            console.log("Selected Bone Index: " + this.selectedBone + "\n");
+            // console.log("Selected Bone Index: " + this.selectedBone + "\n");   
         }
         // TODO: Add logic here:
         // 1) To highlight a bone, if the mouse is hovering over a bone;

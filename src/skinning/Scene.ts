@@ -114,10 +114,9 @@ export class Bone {
       //                   0, 0, 0, 1
       //                 ]);
       this.T = new Mat4([1, 0, 0, 0,
-        0, 1, 0, 0,
-        0, 0, 1, 0,
-        translation.x, translation.y, translation.z, 1
-      ]);
+                          0, 1, 0, 0,
+                          0, 0, 1, 0,
+                          translation.x, translation.y, translation.z, 1]);
     }
     for (let i: number = 0; i < this.children.length; i++) {
       let curr: Bone = bones[this.children[i]];
@@ -149,10 +148,10 @@ export class Mesh {
     });
     this.bones.forEach(bone => {
       if(bone.parent == -1) { // if root
-        let array: number[] = [1, 0, 0, bone.position.x,
-                              0, 1, 0, bone.position.y,
-                              0, 0, 1, bone.position.z,
-                              0, 0, 0, 1];
+        let array: number[] = [1, 0, 0, 0,
+                                0, 1, 0, 0,
+                                0, 0, 1, 0,
+                                bone.position.x, bone.position.y, bone.position.z, 1];
         bone.setTMatrix(this.bones, true);
         bone.setDMatrix(new Mat4(array), this.bones); 
         bone.setUMatrix(new Mat4(array), this.bones);
