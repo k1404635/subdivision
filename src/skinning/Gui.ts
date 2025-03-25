@@ -5,6 +5,7 @@ import { Mat4, Vec3, Vec4, Vec2, Mat2, Quat } from "../lib/TSM.js";
 import { Bone } from "./Scene.js";
 import { RenderPass } from "../lib/webglutils/RenderPass.js";
 import { Scene } from "../lib/threejs/src/Three.js";
+import { boneVSText } from "./Shaders.js";
 
 /**
  * Might be useful for designing any animation GUI
@@ -221,20 +222,27 @@ export class GUI implements IGUI {
       }
     } else { // hovering
       let bones: Bone[] = this.animation.getScene().meshes[0].bones;
-      let ndc: Vec4 = new Vec4([ (2 * x / this.width) - 1, -1 * ((2 * y / this.viewPortHeight) - 1), -1, 0]);
+      let ndc: Vec4 = new Vec4([ ((2.0 * x) / this.width) - 1.0, 1.0 - ((2.0 * y) / this.viewPortHeight), -1.0, 0.0]);
       let V_inv: Mat4 = new Mat4();
       let P_inv: Mat4 = new Mat4();
       this.viewMatrix().inverse(V_inv);
       this.projMatrix().inverse(P_inv);
+      let q: Vec4 = new Vec4([ndc.x, ndc.y, 0.0, 1.0]);
+      let p: Vec4 = new Vec4([ndc.x, ndc.y, 1.0, 1.0]);
+      q.multiplyMat4(P_inv);
+      p.multiplyMat4(P_inv);
       let q_world: Vec4 = new Vec4();
-      ndc.multiplyMat4(P_inv, q_world);
-      let camera_pos: Vec4 = new Vec4([this.camera.pos().x, this.camera.pos().y, this.camera.pos().z, 1.0]);
-      let ray_origin: Vec4 = new Vec4();
-      V_inv.multiplyVec4(camera_pos, ray_origin);
-      (q_world.scale(1.0 / q_world.w)).multiplyMat4(V_inv);
+      q.multiplyMat4(V_inv, q_world);
+      q_world.scale(1.0 / q_world.w);
+      let p_world: Vec4 = new Vec4();
+      p.multiplyMat4(V_inv, p_world);
+      p_world.scale(1.0 / p_world.w);
       let ray: Vec4 = new Vec4();
-      q_world.subtract(ray_origin, ray);
-      ray[3] = 0.0;
+      p_world.subtract(q_world, ray);
+      ray.w = 0.0;
+      ray.normalize();
+      let ray_origin: Vec4 = p_world.copy();
+      ray_origin.w = 1.0;
 
       let min_t: number = Number.MAX_SAFE_INTEGER;
       this.selectedBone = -1;
@@ -257,24 +265,36 @@ export class GUI implements IGUI {
         dir_local.normalize();
         // console.log("dir_local: ", dir_local.xyzw);
 
+        let joint_local: Vec4 = new Vec4();
+        Dinv.multiplyVec4(new Vec4([curr.position.x, curr.position.y, curr.position.z, 1.0]), joint_local);
+        let endpoint_local: Vec4 = new Vec4();
+        Dinv.multiplyVec4(new Vec4([curr.endpoint.x, curr.endpoint.y, curr.endpoint.z, 1.0]), endpoint_local);
+
+        let min_y: number = Math.min(joint_local.y, endpoint_local.y);
+        let max_y: number = Math.max(joint_local.y, endpoint_local.y);
+        // console.log("joint world: ", curr.position.xyz);
+        // console.log("endpoint world: ", curr.endpoint.xyz);
+        // console.log("min_y: ", min_y);
+        // console.log("max_y: ", max_y);
+
         let a: number = dir_local.x * dir_local.x + dir_local.z * dir_local.z;
         // console.log("a: " + a + "\n");
         let b: number = 2 * (dir_local.x * origin_local.x + dir_local.z * origin_local.z);
         // console.log("b: " + b + "\n");
-        let c: number = origin_local.x * origin_local.x + origin_local.z * origin_local.z - (0.1 * 0.1); // radius = 0.1
+        let c: number = origin_local.x * origin_local.x + origin_local.z * origin_local.z - (0.05 * 0.05); // radius = 0.1
         // console.log("c: " + c + "\n");
 
         let discriminant: number = b * b - 4 * a * c;
         // console.log("Discriminant: " + discriminant + "\n");
-        let height: number = Vec3.distance(curr.endpoint, curr.position);
         let do_t2: boolean = false;
         if (discriminant >= 0) {
           let t1: number = (-b - Math.sqrt(discriminant)) / (2 * a);
-          // console.log("t1: " + t1 + "\n");
           if (t1 >= 0) {
+            // console.log("t1: " + t1 + "\n");
             let y1: number = origin_local.y + (dir_local.y * t1);
-            // console.log("y1: ", y1);
-            if (y1 <= 0 && y1 <= height) {
+            console.log("y1: ", y1);
+            // if (y1 <= 0 && y1 <= height) {
+            if(y1 >= min_y && y1 <= max_y) {
               if (t1 < min_t) {
                 min_t = t1;
                 this.selectedBone = index;
@@ -290,18 +310,15 @@ export class GUI implements IGUI {
             let t2: number = (-b + Math.sqrt(discriminant)) / (2 * a);
             // console.log("t2: " + t2 + "\n");
             let y2: number = origin_local.y + (dir_local.y * t2);
-            // console.log("y2: ", y2);
-            if (t2 < min_t && y2 >= 0 && y2 <= height) {
+            console.log("y2: ", y2);
+            if (t2 < min_t && y2 >= min_y && y2 <= max_y) {
               min_t = t2;
               this.selectedBone = index;
             }
           }
         }
         // console.log("Selected Bone Index: " + this.selectedBone + "\n");
-      });
-
-      // highlight bone
-      
+      });      
     } 
     // TODO: Add logic here:
     // 1) To highlight a bone, if the mouse is hovering over a bone;

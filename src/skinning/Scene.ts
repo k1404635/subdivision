@@ -96,7 +96,7 @@ export class Bone {
     return this.U;
   }
   
-  public setRMatrix(mat: Mat4): void{
+  public setRMatrix(mat: Mat4): void{// need to set D after setting R, but we don't have access to parent bone's info
     this.R = mat;
   }
 
