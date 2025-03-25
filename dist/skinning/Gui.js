@@ -159,7 +159,10 @@ export class GUI {
             p_world.subtract(q_world, ray);
             ray.w = 0.0;
             ray.normalize();
-            let ray_origin = p_world.copy();
+            // let ray_origin: Vec4 = p_world.copy();
+            // ray_origin.w = 1.0;
+            let ray_origin = new Vec4([this.camera.pos().x, this.camera.pos().y, this.camera.pos().z, 1.0]);
+            P_inv.multiplyVec4(ray_origin);
             ray_origin.w = 1.0;
             let min_t = Number.MAX_SAFE_INTEGER;
             this.selectedBone = -1;
@@ -172,19 +175,25 @@ export class GUI {
                 // console.log("ray dir: ", ray.xyzw);
                 let origin_local = new Vec4();
                 Dinv.multiplyVec4(ray_origin, origin_local);
-                // console.log("origin_local: ", origin_local.xyzw);
+                console.log("origin_local: ", origin_local.xyzw);
+                console.log("origin_global: ", ray_origin.xyzw);
                 let dir_local = new Vec4();
                 Dinv.multiplyVec4(ray, dir_local);
                 dir_local.normalize();
-                // console.log("dir_local: ", dir_local.xyzw);
+                console.log("dir_local: ", dir_local.xyzw);
+                console.log("dir_global: ", ray.xyzw);
                 let joint_local = new Vec4();
                 Dinv.multiplyVec4(new Vec4([curr.position.x, curr.position.y, curr.position.z, 1.0]), joint_local);
                 let endpoint_local = new Vec4();
                 Dinv.multiplyVec4(new Vec4([curr.endpoint.x, curr.endpoint.y, curr.endpoint.z, 1.0]), endpoint_local);
                 let min_y = Math.min(joint_local.y, endpoint_local.y);
                 let max_y = Math.max(joint_local.y, endpoint_local.y);
-                // console.log("joint world: ", curr.position.xyz);
-                // console.log("endpoint world: ", curr.endpoint.xyz);
+                let height = Vec3.distance(curr.position, curr.endpoint);
+                console.log("height:" + height);
+                // console.log("joint local: ", joint_local.xyz);
+                // console.log("endpoint local: ", endpoint_local.xyz);
+                console.log("joint world: ", curr.position.xyz);
+                console.log("endpoint world: ", curr.endpoint.xyz);
                 // console.log("min_y: ", min_y);
                 // console.log("max_y: ", max_y);
                 let a = dir_local.x * dir_local.x + dir_local.z * dir_local.z;
@@ -199,11 +208,11 @@ export class GUI {
                 if (discriminant >= 0) {
                     let t1 = (-b - Math.sqrt(discriminant)) / (2 * a);
                     if (t1 >= 0) {
-                        // console.log("t1: " + t1 + "\n");
+                        console.log("t1: " + t1 + "\n");
                         let y1 = origin_local.y + (dir_local.y * t1);
                         console.log("y1: ", y1);
-                        // if (y1 <= 0 && y1 <= height) {
-                        if (y1 >= min_y && y1 <= max_y) {
+                        if (y1 <= 0 && y1 <= height) {
+                            // if(y1 >= min_y && y1 <= max_y) {
                             if (t1 < min_t) {
                                 min_t = t1;
                                 this.selectedBone = index;
@@ -218,10 +227,11 @@ export class GUI {
                     }
                     if (do_t2) {
                         let t2 = (-b + Math.sqrt(discriminant)) / (2 * a);
-                        // console.log("t2: " + t2 + "\n");
+                        console.log("t2: " + t2 + "\n");
                         let y2 = origin_local.y + (dir_local.y * t2);
                         console.log("y2: ", y2);
-                        if (t2 < min_t && y2 >= min_y && y2 <= max_y) {
+                        if (t2 < min_t && y2 >= 0 && y2 <= height) {
+                            // if (t2 < min_t && y2 >= min_y && y2 <= max_y) {
                             min_t = t2;
                             this.selectedBone = index;
                         }
