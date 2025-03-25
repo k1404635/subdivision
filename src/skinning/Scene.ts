@@ -96,8 +96,13 @@ export class Bone {
     return this.U;
   }
   
-  public setRMatrix(mat: Mat4): void{// need to set D after setting R, but we don't have access to parent bone's info
+  public setRMatrix(mat: Mat4, bones: Bone[]): void{
     this.R = mat;
+    if(this.parent != -1)
+      this.setDMatrix(bones[this.parent].getDMatrix(), bones);
+    else {
+      this.setDMatrix(this.getUMatrix(), bones);
+    }
   }
 
   public getRMatrix(): Mat4{
@@ -108,11 +113,6 @@ export class Bone {
     if(!root) {
       let translation: Vec3 = new Vec3();
       this.position.subtract(bones[this.parent].position, translation);
-      // this.T = new Mat4([1, 0, 0, translation.x,
-      //                   0, 1, 0, translation.y,
-      //                   0, 0, 1, translation.z,
-      //                   0, 0, 0, 1
-      //                 ]);
       this.T = new Mat4([1, 0, 0, 0,
                           0, 1, 0, 0,
                           0, 0, 1, 0,

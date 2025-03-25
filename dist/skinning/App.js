@@ -2,7 +2,7 @@ import { Debugger } from "../lib/webglutils/Debugging.js";
 import { CanvasAnimation } from "../lib/webglutils/CanvasAnimation.js";
 import { Floor } from "../lib/webglutils/Floor.js";
 import { GUI } from "./Gui.js";
-import { sceneFSText, sceneVSText, floorFSText, floorVSText, skeletonFSText, skeletonVSText, sBackVSText, sBackFSText, boneVSText, boneFSText } from "./Shaders.js";
+import { sceneFSText, sceneVSText, floorFSText, floorVSText, skeletonFSText, skeletonVSText, sBackVSText, sBackFSText } from "./Shaders.js";
 import { Mat4, Vec4 } from "../lib/TSM.js";
 import { CLoader } from "./AnimationFileLoader.js";
 import { RenderPass } from "../lib/webglutils/RenderPass.js";
@@ -22,7 +22,6 @@ export class SkinningAnimation extends CanvasAnimation {
         this.sceneRenderPass = new RenderPass(this.extVAO, gl, sceneVSText, sceneFSText);
         this.skeletonRenderPass = new RenderPass(this.extVAO, gl, skeletonVSText, skeletonFSText);
         //TODO: Add in other rendering initializations for other shaders such as bone highlighting
-        this.boneRenderPass = new RenderPass(this.extVAO, gl, boneVSText, boneFSText);
         this.gui = new GUI(this.canvas2d, this);
         this.lightPosition = new Vec4([-10, 10, -10, 1]);
         this.backgroundColor = new Vec4([0.0, 0.37254903, 0.37254903, 1.0]);
@@ -139,8 +138,7 @@ export class SkinningAnimation extends CanvasAnimation {
     }
     //TODO: Set up a Render Pass for the bone highlighting
     initBone() {
-        // mouse stuff to find which bone is closest
-        // get that bone's indicies to set the renderpass's bufferdata
+        // not used
     }
     /**
      * Sets up the floor drawing

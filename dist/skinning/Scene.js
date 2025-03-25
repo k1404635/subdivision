@@ -64,8 +64,13 @@ export class Bone {
     getUMatrix() {
         return this.U;
     }
-    setRMatrix(mat) {
+    setRMatrix(mat, bones) {
         this.R = mat;
+        if (this.parent != -1)
+            this.setDMatrix(bones[this.parent].getDMatrix(), bones);
+        else {
+            this.setDMatrix(this.getUMatrix(), bones);
+        }
     }
     getRMatrix() {
         return this.R;
@@ -74,11 +79,6 @@ export class Bone {
         if (!root) {
             let translation = new Vec3();
             this.position.subtract(bones[this.parent].position, translation);
-            // this.T = new Mat4([1, 0, 0, translation.x,
-            //                   0, 1, 0, translation.y,
-            //                   0, 0, 1, translation.z,
-            //                   0, 0, 0, 1
-            //                 ]);
             this.T = new Mat4([1, 0, 0, 0,
                 0, 1, 0, 0,
                 0, 0, 1, 0,

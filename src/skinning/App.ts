@@ -13,9 +13,7 @@ import {
   skeletonFSText,
   skeletonVSText,
   sBackVSText,
-  sBackFSText,
-  boneVSText,
-  boneFSText
+  sBackFSText
 } from "./Shaders.js";
 import { Mat4, Vec4, Vec3 } from "../lib/TSM.js";
 import { CLoader } from "./AnimationFileLoader.js";
@@ -72,7 +70,6 @@ export class SkinningAnimation extends CanvasAnimation {
     this.sceneRenderPass = new RenderPass(this.extVAO, gl, sceneVSText, sceneFSText);
     this.skeletonRenderPass = new RenderPass(this.extVAO, gl, skeletonVSText, skeletonFSText);
 	//TODO: Add in other rendering initializations for other shaders such as bone highlighting
-    this.boneRenderPass = new RenderPass(this.extVAO, gl, boneVSText, boneFSText);
 
     this.gui = new GUI(this.canvas2d, this);
     this.lightPosition = new Vec4([-10, 10, -10, 1]);
@@ -235,8 +232,7 @@ export class SkinningAnimation extends CanvasAnimation {
 
   	//TODO: Set up a Render Pass for the bone highlighting
   public initBone(): void {
-    // mouse stuff to find which bone is closest
-    // get that bone's indicies to set the renderpass's bufferdata
+    // not used
   }
 
   /**

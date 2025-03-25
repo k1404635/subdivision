@@ -241,8 +241,6 @@ export class GUI implements IGUI {
       p_world.subtract(q_world, ray);
       ray.w = 0.0;
       ray.normalize();
-      // let ray_origin: Vec4 = p_world.copy();
-      // ray_origin.w = 1.0;
       let ray_origin: Vec4 = new Vec4([this.camera.pos().x, this.camera.pos().y, this.camera.pos().z, 1.0]);
       P_inv.multiplyVec4(ray_origin);
       ray_origin.w = 1.0;
@@ -250,56 +248,31 @@ export class GUI implements IGUI {
       let min_t: number = Number.MAX_SAFE_INTEGER;
       this.selectedBone = -1;
       bones.forEach((curr, index) => {
-        // console.log ("Bone Index: " + index);
         let boneD: Mat4 = curr.getDMatrix();
-        // console.log("boneD Matrix: ", boneD.all());
 
         let Dinv: Mat4 = new Mat4();
         boneD.inverse(Dinv);
-        // console.log("D: ", boneD.all());
-        // console.log("Dinv: ", Dinv.all());
-        
-        // console.log("ray origin: ", ray_origin.xyzw);
-        // console.log("ray dir: ", ray.xyzw);
 
         let origin_local: Vec4 = new Vec4();
         Dinv.multiplyVec4(ray_origin, origin_local);
 
-        // console.log("origin_local: ", origin_local.xyzw);
-        // console.log("origin_global: ", ray_origin.xyzw);
         let dir_local: Vec4 = new Vec4();
         Dinv.multiplyVec4(ray, dir_local);
         dir_local.normalize();
-        // console.log("dir_local: ", dir_local.xyzw);
-        // console.log("dir_global: ", ray.xyzw);
 
         let joint_local: Vec4 = new Vec4();
         Dinv.multiplyVec4(new Vec4([curr.position.x, curr.position.y, curr.position.z, 1.0]), joint_local);
         let endpoint_local: Vec4 = new Vec4();
         Dinv.multiplyVec4(new Vec4([curr.endpoint.x, curr.endpoint.y, curr.endpoint.z, 1.0]), endpoint_local);
 
-        // let height: number = Vec3.distance(curr.position, curr.endpoint);
-        // console.log ("height:" + height);
-        // console.log("joint local: ", joint_local.xyz);
-        // console.log("endpoint local: ", endpoint_local.xyz);
-        // console.log("joint world: ", curr.position.xyz);
-        // console.log("endpoint world: ", curr.endpoint.xyz);
-        // console.log("min_y: ", min_y);
-        // console.log("max_y: ", max_y);
-
         // align the bone to the y-axis
-        // console.log("before joint local: ", joint_local.xyz);
-        // console.log("before endpoint local: ", endpoint_local.xyz);
         let bone_vec: Vec4 = new Vec4();
         bone_vec = joint_local.subtract(endpoint_local, bone_vec);
         bone_vec.w = 1.0;
         let bone_dir = new Vec3(bone_vec.xyz);
         bone_dir.normalize();
         let target_dir: Vec3 = new Vec3([0, 1, 0]);
-        // console.log ("bone dir: ", bone_dir.xyz);
-        // console.log ("target dir: ", target_dir.xyz);
         let rotation_axis: Vec3 = Vec3.cross(bone_dir, target_dir);
-        // console.log ("rotation axis: ", rotation_axis.xyz);
         if (!(rotation_axis.x == 0 && rotation_axis.y == 0 && rotation_axis.z == 0)) {
           rotation_axis.normalize();
           let rotation_angle: number = Math.acos(Vec3.dot(bone_dir, target_dir));
@@ -307,47 +280,29 @@ export class GUI implements IGUI {
           Quat.fromAxisAngle(rotation_axis, rotation_angle, quat);
           let rotation_matrix: Mat4 = quat.toMat4();
 
-          // console.log("ROTATION MATRIX:", rotation_matrix.all());
-
           endpoint_local.multiplyMat4(rotation_matrix);
           joint_local.multiplyMat4(rotation_matrix);
 
-
-          // let aligned: Vec3 = Vec3.cross(new Vec3(dir_local.xyz), target_dir);
-          // if (!(aligned.x == 0 && aligned.y == 0 && aligned.z == 0)) {
-          //   dir_local.multiplyMat4(rotation_matrix);
-          //   origin_local.multiplyMat4(rotation_matrix);
-          // }
-          // console.log ("before dir local: ", dir_local.xyzw);
-          // console.log ("before origin local: ", origin_local.xyzw);
           dir_local.multiplyMat4(rotation_matrix);
           origin_local.multiplyMat4(rotation_matrix);
-          // console.log ("dir local: ", dir_local.xyzw);
-          // console.log ("origin local: ", origin_local.xyzw);
         }
-        // console.log("joint local: ", joint_local.xyz);
-        // console.log("endpoint local: ", endpoint_local.xyz);
+
+        let distance: number = Vec3.distance(new Vec3 (joint_local.xyz), new Vec3 (origin_local.xyz));
+        let radius: number = 0.05 * (distance / 6.0);
 
         let a: number = dir_local.x * dir_local.x + dir_local.z * dir_local.z;
-        // console.log("a: " + a + "\n");
         let b: number = 2 * (dir_local.x * origin_local.x + dir_local.z * origin_local.z);
-        // console.log("b: " + b + "\n");
         let c: number = origin_local.x * origin_local.x + origin_local.z * origin_local.z - (0.05 * 0.05); // radius = 0.05
 
         let min_y: number = Math.min(joint_local.y, endpoint_local.y);
         let max_y: number = Math.max(joint_local.y, endpoint_local.y);
-        // console.log("c: " + c + "\n");
 
         let discriminant: number = b * b - 4 * a * c;
-        // console.log("Discriminant: " + discriminant + "\n");
         let do_t2: boolean = false;
         if (discriminant >= 0) {
           let t1: number = (-b - Math.sqrt(discriminant)) / (2 * a);
           if (t1 >= 0) {
-            // console.log("t1: " + t1 + "\n");
             let y1: number = origin_local.y + (dir_local.y * t1);
-            // console.log("y1: ", y1);
-            // if (y1 <= 0 && y1 <= height) {
             if(y1 >= min_y && y1 <= max_y) {
               if (t1 < min_t) {
                 min_t = t1;
@@ -362,10 +317,7 @@ export class GUI implements IGUI {
           
           if (do_t2) {
             let t2: number = (-b + Math.sqrt(discriminant)) / (2 * a);
-            // console.log("t2: " + t2 + "\n");
             let y2: number = origin_local.y + (dir_local.y * t2);
-            // console.log("y2: ", y2);
-            // if (t2 < min_t && y2 >= 0 && y2 <= height) {
             if (t2 < min_t && y2 >= min_y && y2 <= max_y) {
               min_t = t2;
               this.selectedBone = index;
