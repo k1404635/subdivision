@@ -76,9 +76,13 @@ export class Bone {
   }
 
   public setDMatrix(D: Mat4, bones: Bone[]): void{
+    // console.log("before D: ", this.D.all());
     this.D = new Mat4();
     D.multiply(this.T, this.D);
     this.D.multiply(this.R);
+    // console.log("T: ", this.T.all());
+    // console.log("R: ", this.R.all());
+    // console.log("after D: ", this.D.all());
 
     for (let i: number = 0; i < this.children.length; i++) {
       let curr: Bone = bones[this.children[i]];
@@ -87,8 +91,11 @@ export class Bone {
   }
 
   public setUMatrix(U: Mat4, bones: Bone[]): void{
-    this.U = new Mat4();
+    // this.U = new Mat4();
     U.multiply(this.T, this.U);
+    // this.T.multiply(U, this.U);
+    // console.log("joint position: ", this.position);
+    // console.log("setting U to: ", this.U.all());
     for (let i: number = 0; i < this.children.length; i++) {
       let curr: Bone = bones[this.children[i]];
       curr.setUMatrix(this.U.copy(), bones);
@@ -100,13 +107,17 @@ export class Bone {
   }
   
   public setRMatrix(mat: Mat4, bones: Bone[]): void{
+    // console.log("before R: ", this.R.all());
     let temp: Mat4 = mat.copy();
     temp.multiply(this.R, this.R);
+    // console.log("after R: ", this.R.all());
+    // console.log("before D: ", this.D.all());
     if(this.parent != -1)
       this.setDMatrix(bones[this.parent].getDMatrix(), bones);
     else {
       this.setDMatrix(this.getUMatrix(), bones);
     }
+    // console.log("after D: ", this.D.all());
 
     this.D.copy().toMat3().toQuat(this.rotation);
 
@@ -123,15 +134,25 @@ export class Bone {
     orig_local_joint.multiplyMat4(U_inv);
     let orig_local_endpoint: Vec4 = new Vec4([this.orig_end.x, this.orig_end.y, this.orig_end.z, 1.0]);
     orig_local_endpoint.multiplyMat4(U_inv);
-
+    // console.log("U matrix: ", this.U);
+    // console.log("orig_local_joint: ", orig_local_joint.xyz);
+    // console.log("orig_local_endpoint: ", orig_local_endpoint.xyz);
+    // console.log("this.position: ", this.position.xyz);
+    // console.log("this.endpoint: ", this.endpoint.xyz);
+    
     let temp: Vec4 = new Vec4();
-    // this.D.multiplyVec4(orig_local_joint, temp);
-    // orig_local_joint.multiplyMat4(this.D, temp);
-    // this.position = new Vec3(temp.xyz);
-    // temp = new Vec4();
+    this.D.multiplyVec4(orig_local_joint, temp);
+    orig_local_joint.multiplyMat4(this.D, temp);
+    this.position = new Vec3(temp.xyz);
+    temp = new Vec4();
     this.D.multiplyVec4(orig_local_endpoint, temp);
-    // orig_local_endpoint.multiplyMat4(this.D, temp);
+    orig_local_endpoint.multiplyMat4(this.D, temp);
     this.endpoint = new Vec3(temp.xyz);
+
+    // console.log("this.position after: ", this.position.xyz);
+    // console.log("this.endpoint after: ", this.endpoint.xyz);
+    
+    this.D.copy().toMat3().toQuat(this.rotation);
 
     for (let i: number = 0; i < this.children.length; i++) {
       let curr: Bone = bones[this.children[i]];
@@ -151,11 +172,13 @@ export class Bone {
                           0, 1, 0, 0,
                           0, 0, 1, 0,
                           translation.x, translation.y, translation.z, 1]);
+      // console.log("Translation Vector: ", translation.xyz);
     }
-    for (let i: number = 0; i < this.children.length; i++) {
-      let curr: Bone = bones[this.children[i]];
-      curr.setTMatrix(bones, false);
-    }
+    // console.log("Translation Matrix: ", this.T.all());
+    // for (let i: number = 0; i < this.children.length; i++) {
+    //   let curr: Bone = bones[this.children[i]];
+    //   curr.setTMatrix(bones, false);
+    // }
   }
 }
 
@@ -182,13 +205,20 @@ export class Mesh {
     });
     this.bones.forEach(bone => {
       if(bone.parent == -1) { // if root
+        bone.setTMatrix(this.bones, true);
+      }
+      else {
+        bone.setTMatrix(this.bones, false);
+      }
+    })
+    this.bones.forEach(bone => {
+      if(bone.parent == -1) { // if root
         let array: number[] = [1, 0, 0, 0,
                                 0, 1, 0, 0,
                                 0, 0, 1, 0,
                                 bone.position.x, bone.position.y, bone.position.z, 1];
-        bone.setTMatrix(this.bones, true);
-        bone.setDMatrix(new Mat4(array), this.bones); 
         bone.setUMatrix(new Mat4(array), this.bones);
+        bone.setDMatrix(new Mat4(array), this.bones);
       }
     })
     this.materialName = mesh.materialName;
