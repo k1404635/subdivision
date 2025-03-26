@@ -1,4 +1,4 @@
-import { Mat4, Vec3 } from "../lib/TSM.js";
+import { Mat4, Vec3, Vec4 } from "../lib/TSM.js";
 //TODO: Generate cylinder geometry for highlighting bones
 //General class for handling GLSL attributes
 export class Attribute {
@@ -31,45 +31,71 @@ export class Bone {
         this.children = Array.from(bone.children);
         this.position = bone.position.copy();
         this.endpoint = bone.endpoint.copy();
+        this.orig_pos = bone.position.copy();
+        this.orig_end = bone.endpoint.copy();
         this.rotation = bone.rotation.copy();
         this.R = new Mat4();
         this.T = new Mat4();
         this.R.setIdentity();
         this.T.setIdentity();
+        this.D = new Mat4();
+        this.U = new Mat4();
     }
     getDMatrix() {
         return this.D;
     }
     setDMatrix(D, bones) {
         this.D = new Mat4();
-        // console.log("Before multiplication, D matrix:", this.D.all());
-        this.R.multiply(this.T, this.D);
-        // console.log("After RxT, D matrix:", this.D.all());
-        this.D.multiply(D, this.D);
-        // console.log("After Dxthis.D, D matrix:", this.D.all());
-        // this.R.multiply(this.T, this.D).multiply(D, this.D);
+        D.multiply(this.T, this.D);
+        this.D.multiply(this.R);
         for (let i = 0; i < this.children.length; i++) {
             let curr = bones[this.children[i]];
-            curr.setDMatrix(this.D, bones);
+            curr.setDMatrix(this.D.copy(), bones);
         }
     }
     setUMatrix(U, bones) {
         this.U = new Mat4();
-        this.T.multiply(U, this.U);
+        U.multiply(this.T, this.U);
         for (let i = 0; i < this.children.length; i++) {
             let curr = bones[this.children[i]];
-            curr.setUMatrix(this.U, bones);
+            curr.setUMatrix(this.U.copy(), bones);
         }
     }
     getUMatrix() {
         return this.U;
     }
     setRMatrix(mat, bones) {
-        this.R = mat;
+        let temp = mat.copy();
+        temp.multiply(this.R, this.R);
         if (this.parent != -1)
             this.setDMatrix(bones[this.parent].getDMatrix(), bones);
         else {
             this.setDMatrix(this.getUMatrix(), bones);
+        }
+        this.D.copy().toMat3().toQuat(this.rotation);
+        for (let i = 0; i < this.children.length; i++) {
+            let curr = bones[this.children[i]];
+            curr.updatePoints(bones);
+        }
+    }
+    updatePoints(bones) {
+        let U_inv = new Mat4();
+        this.U.inverse(U_inv);
+        let orig_local_joint = new Vec4([this.orig_pos.x, this.orig_pos.y, this.orig_pos.z, 1.0]);
+        orig_local_joint.multiplyMat4(U_inv);
+        let orig_local_endpoint = new Vec4([this.orig_end.x, this.orig_end.y, this.orig_end.z, 1.0]);
+        orig_local_endpoint.multiplyMat4(U_inv);
+        let temp = new Vec4();
+        // this.D.multiplyVec4(orig_local_joint, temp);
+        // orig_local_joint.multiplyMat4(this.D, temp);
+        // this.position = new Vec3(temp.xyz);
+        // temp = new Vec4();
+        this.D.multiplyVec4(orig_local_endpoint, temp);
+        // orig_local_endpoint.multiplyMat4(this.D, temp);
+        this.endpoint = new Vec3(temp.xyz);
+        for (let i = 0; i < this.children.length; i++) {
+            let curr = bones[this.children[i]];
+            curr.updatePoints(bones);
         }
     }
     getRMatrix() {

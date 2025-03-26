@@ -5,7 +5,6 @@ import { Mat4, Vec3, Vec4, Vec2, Mat2, Quat } from "../lib/TSM.js";
 import { Bone } from "./Scene.js";
 import { RenderPass } from "../lib/webglutils/RenderPass.js";
 import { Scene } from "../lib/threejs/src/Three.js";
-import { boneVSText } from "./Shaders.js";
 
 /**
  * Might be useful for designing any animation GUI
@@ -413,14 +412,65 @@ export class GUI implements IGUI {
         break;
       }
       case "ArrowLeft": {
-		//TODO: Handle bone rolls when a bone is selected
-		this.camera.roll(GUI.rollSpeed, false);
-        break;
+        //TODO: Handle bone rolls when a bone is selected
+        if(this.selectedBone == -1) {
+          this.camera.roll(GUI.rollSpeed, false);
+          break;
+        } else { // do bone rolling
+          let bone: Bone = this.animation.getScene().meshes[0].bones[this.selectedBone];
+          let boneD: Mat4 = bone.getDMatrix(); 
+          let Dinv: Mat4 = new Mat4();
+          boneD.inverse(Dinv);
+
+          let joint_local: Vec4 = new Vec4();
+          Dinv.multiplyVec4(new Vec4([bone.position.x, bone.position.y, bone.position.z, 1.0]), joint_local);
+          let endpoint_local: Vec4 = new Vec4();
+          Dinv.multiplyVec4(new Vec4([bone.endpoint.x, bone.endpoint.y, bone.endpoint.z, 1.0]), endpoint_local);
+
+          let temp: Vec4 = new Vec4();
+          endpoint_local.subtract(joint_local, temp);
+          let axis: Vec3 = new Vec3(temp.xyz);
+          axis.normalize();
+          let angle: number = Math.abs(GUI.rollSpeed);
+
+          let quat: Quat = new Quat();
+          Quat.fromAxisAngle(axis, angle, quat);
+          let new_R: Mat4 = new Mat4();
+          new_R = quat.toMat4();
+          bone.setRMatrix(new_R, this.animation.getScene().meshes[0].bones);
+          break;
+        }
+  		  
       }
       case "ArrowRight": {
-		//TODO: Handle bone rolls when a bone is selected
-		this.camera.roll(GUI.rollSpeed, true);
-        break;
+        //TODO: Handle bone rolls when a bone is selected
+        if(this.selectedBone == -1) {
+          this.camera.roll(GUI.rollSpeed, true);
+          break;
+        } else { // do bone rolling
+          let bone: Bone = this.animation.getScene().meshes[0].bones[this.selectedBone];
+          let boneD: Mat4 = bone.getDMatrix(); 
+          let Dinv: Mat4 = new Mat4();
+          boneD.inverse(Dinv);
+
+          let joint_local: Vec4 = new Vec4();
+          Dinv.multiplyVec4(new Vec4([bone.position.x, bone.position.y, bone.position.z, 1.0]), joint_local);
+          let endpoint_local: Vec4 = new Vec4();
+          Dinv.multiplyVec4(new Vec4([bone.endpoint.x, bone.endpoint.y, bone.endpoint.z, 1.0]), endpoint_local);
+
+          let temp: Vec4 = new Vec4();
+          endpoint_local.subtract(joint_local, temp);
+          let axis: Vec3 = new Vec3(temp.xyz);
+          axis.normalize();
+          let angle: number = -Math.abs(GUI.rollSpeed);
+
+          let quat: Quat = new Quat();
+          Quat.fromAxisAngle(axis, angle, quat);
+          let new_R: Mat4 = new Mat4();
+          new_R = quat.toMat4();
+          bone.setRMatrix(new_R, this.animation.getScene().meshes[0].bones);
+          break;
+        }
       }
       case "ArrowUp": {
         this.camera.offset(this.camera.up(), GUI.zoomSpeed, true);
@@ -432,7 +482,7 @@ export class GUI implements IGUI {
       }
       case "KeyK": {
         if (this.mode === Mode.edit) {
-		//TODO: Add keyframes if required by project spec
+		      //TODO: Add keyframes if required by project spec
         }
         break;
       }      

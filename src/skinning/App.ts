@@ -333,7 +333,7 @@ export class SkinningAnimation extends CanvasAnimation {
       this.sceneRenderPass.draw();
       gl.disable(gl.DEPTH_TEST);
       this.skeletonRenderPass.draw();
-	  //TODO: Add functionality for drawing the highlighted bone when necessary
+	    //TODO: Add functionality for drawing the highlighted bone when necessary
       gl.enable(gl.DEPTH_TEST);      
     }
   }

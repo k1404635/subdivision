@@ -317,13 +317,59 @@ export class GUI {
             }
             case "ArrowLeft": {
                 //TODO: Handle bone rolls when a bone is selected
-                this.camera.roll(GUI.rollSpeed, false);
-                break;
+                if (this.selectedBone == -1) {
+                    this.camera.roll(GUI.rollSpeed, false);
+                    break;
+                }
+                else { // do bone rolling
+                    let bone = this.animation.getScene().meshes[0].bones[this.selectedBone];
+                    let boneD = bone.getDMatrix();
+                    let Dinv = new Mat4();
+                    boneD.inverse(Dinv);
+                    let joint_local = new Vec4();
+                    Dinv.multiplyVec4(new Vec4([bone.position.x, bone.position.y, bone.position.z, 1.0]), joint_local);
+                    let endpoint_local = new Vec4();
+                    Dinv.multiplyVec4(new Vec4([bone.endpoint.x, bone.endpoint.y, bone.endpoint.z, 1.0]), endpoint_local);
+                    let temp = new Vec4();
+                    endpoint_local.subtract(joint_local, temp);
+                    let axis = new Vec3(temp.xyz);
+                    axis.normalize();
+                    let angle = Math.abs(GUI.rollSpeed);
+                    let quat = new Quat();
+                    Quat.fromAxisAngle(axis, angle, quat);
+                    let new_R = new Mat4();
+                    new_R = quat.toMat4();
+                    bone.setRMatrix(new_R, this.animation.getScene().meshes[0].bones);
+                    break;
+                }
             }
             case "ArrowRight": {
                 //TODO: Handle bone rolls when a bone is selected
-                this.camera.roll(GUI.rollSpeed, true);
-                break;
+                if (this.selectedBone == -1) {
+                    this.camera.roll(GUI.rollSpeed, true);
+                    break;
+                }
+                else { // do bone rolling
+                    let bone = this.animation.getScene().meshes[0].bones[this.selectedBone];
+                    let boneD = bone.getDMatrix();
+                    let Dinv = new Mat4();
+                    boneD.inverse(Dinv);
+                    let joint_local = new Vec4();
+                    Dinv.multiplyVec4(new Vec4([bone.position.x, bone.position.y, bone.position.z, 1.0]), joint_local);
+                    let endpoint_local = new Vec4();
+                    Dinv.multiplyVec4(new Vec4([bone.endpoint.x, bone.endpoint.y, bone.endpoint.z, 1.0]), endpoint_local);
+                    let temp = new Vec4();
+                    endpoint_local.subtract(joint_local, temp);
+                    let axis = new Vec3(temp.xyz);
+                    axis.normalize();
+                    let angle = -Math.abs(GUI.rollSpeed);
+                    let quat = new Quat();
+                    Quat.fromAxisAngle(axis, angle, quat);
+                    let new_R = new Mat4();
+                    new_R = quat.toMat4();
+                    bone.setRMatrix(new_R, this.animation.getScene().meshes[0].bones);
+                    break;
+                }
             }
             case "ArrowUp": {
                 this.camera.offset(this.camera.up(), GUI.zoomSpeed, true);
