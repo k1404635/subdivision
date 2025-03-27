@@ -95,7 +95,7 @@ export class Bone {
     U.multiply(this.T, this.U);
     // this.T.multiply(U, this.U);
     // console.log("joint position: ", this.position);
-    // console.log("setting U to: ", this.U.all());/
+    // console.log("setting U to: ", this.U.all());
     for (let i: number = 0; i < this.children.length; i++) {
       let curr: Bone = bones[this.children[i]];
       curr.setUMatrix(this.U.copy(), bones);
