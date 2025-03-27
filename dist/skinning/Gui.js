@@ -87,8 +87,6 @@ export class GUI {
         this.prevY = mouse.screenY;
         this.our_prevX = mouse.offsetX;
         this.our_prevY = mouse.offsetY;
-        console.log("clicked at x: ", mouse.screenX);
-        console.log("clicked at y: ", mouse.screenY);
     }
     incrementTime(dT) {
         if (this.mode === Mode.playback) {
@@ -377,7 +375,7 @@ export class GUI {
                     endpoint_local.subtract(joint_local, temp);
                     let axis = new Vec3(temp.xyz);
                     axis.normalize();
-                    let angle = Math.abs(GUI.rollSpeed);
+                    let angle = -Math.abs(GUI.rollSpeed);
                     let quat = new Quat();
                     Quat.fromAxisAngle(axis, angle, quat);
                     let new_R = new Mat4();
@@ -405,7 +403,7 @@ export class GUI {
                     endpoint_local.subtract(joint_local, temp);
                     let axis = new Vec3(temp.xyz);
                     axis.normalize();
-                    let angle = -Math.abs(GUI.rollSpeed);
+                    let angle = Math.abs(GUI.rollSpeed);
                     let quat = new Quat();
                     Quat.fromAxisAngle(axis, angle, quat);
                     let new_R = new Mat4();

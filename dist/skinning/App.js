@@ -71,8 +71,6 @@ export class SkinningAnimation extends CanvasAnimation {
             fIndices[i + 2] = i + 2;
         }
         this.sceneRenderPass.setIndexBufferData(fIndices);
-        //vertPosition is a placeholder value until skinning is in place
-        this.sceneRenderPass.addAttribute("vertPosition", 3, this.ctx.FLOAT, false, 3 * Float32Array.BYTES_PER_ELEMENT, 0, undefined, this.scene.meshes[0].geometry.position.values);
         this.sceneRenderPass.addAttribute("aNorm", 3, this.ctx.FLOAT, false, 3 * Float32Array.BYTES_PER_ELEMENT, 0, undefined, this.scene.meshes[0].geometry.normal.values);
         if (this.scene.meshes[0].geometry.uv) {
             this.sceneRenderPass.addAttribute("aUV", 2, this.ctx.FLOAT, false, 2 * Float32Array.BYTES_PER_ELEMENT, 0, undefined, this.scene.meshes[0].geometry.uv.values);

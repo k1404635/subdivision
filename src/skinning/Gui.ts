@@ -479,7 +479,7 @@ export class GUI implements IGUI {
           endpoint_local.subtract(joint_local, temp);
           let axis: Vec3 = new Vec3(temp.xyz);
           axis.normalize();
-          let angle: number = Math.abs(GUI.rollSpeed);
+          let angle: number = -Math.abs(GUI.rollSpeed);
 
           let quat: Quat = new Quat();
           Quat.fromAxisAngle(axis, angle, quat);
@@ -510,7 +510,7 @@ export class GUI implements IGUI {
           endpoint_local.subtract(joint_local, temp);
           let axis: Vec3 = new Vec3(temp.xyz);
           axis.normalize();
-          let angle: number = -Math.abs(GUI.rollSpeed);
+          let angle: number = Math.abs(GUI.rollSpeed);
 
           let quat: Quat = new Quat();
           Quat.fromAxisAngle(axis, angle, quat);

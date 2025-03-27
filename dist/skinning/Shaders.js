@@ -44,10 +44,6 @@ export const floorFSText = `
 `;
 export const sceneVSText = `
     precision mediump float;
-
-	//Placeholder value for passing through undeformed verts 
-	//(should be discarded in final version of shader)
-    attribute vec3 vertPosition;
 	
     attribute vec2 aUV;
     attribute vec3 aNorm;
@@ -73,17 +69,33 @@ export const sceneVSText = `
     uniform vec3 jTrans[64];
     uniform vec4 jRots[64];
 
-
     void main () {
-	
-        vec3 trans = vertPosition;
+        int index0 = int(skinIndices[0]);
+        int index1 = int(skinIndices[1]);
+        int index2 = int(skinIndices[2]);
+        int index3 = int(skinIndices[3]);
+        vec3 vertex0 = vec3(v0[0], v0[1], v0[2]);
+        vec3 vertex1 = vec3(v1[0], v1[1], v1[2]);
+        vec3 vertex2 = vec3(v2[0], v2[1], v2[2]);
+        vec3 vertex3 = vec3(v3[0], v3[1], v3[2]);
+        vec3 quat0 = vertex0 + 2.0 * cross(cross(vertex0, jRots[index0].xyz) - jRots[index0].w*vertex0, jRots[index0].xyz);
+        vec3 quat1 = vertex1 + 2.0 * cross(cross(vertex1, jRots[index1].xyz) - jRots[index1].w*vertex1, jRots[index1].xyz);
+        vec3 quat2 = vertex2 + 2.0 * cross(cross(vertex2, jRots[index2].xyz) - jRots[index2].w*vertex2, jRots[index2].xyz);
+        vec3 quat3 = vertex3 + 2.0 * cross(cross(vertex3, jRots[index3].xyz) - jRots[index3].w*vertex3, jRots[index3].xyz);
+        vec3 trans = (skinWeights[0] * vec3(jTrans[index0] + quat0)) +
+            (skinWeights[1] * vec3(jTrans[index1] + quat1)) +
+            (skinWeights[2] * vec3(jTrans[index2] + quat2)) +
+            (skinWeights[3] * vec3(jTrans[index3] + quat3));
+
         vec4 worldPosition = mWorld * vec4(trans, 1.0);
         gl_Position = mProj * mView * worldPosition;
         
         //  Compute light direction and transform to camera coordinates
         lightDir = lightPosition - worldPosition;
-        
-        vec4 aNorm4 = vec4(aNorm, 0.0);
+
+        vec3 skinned_normal = aNorm * trans;
+        // vec4 aNorm4 = vec4(aNorm, 0.0);
+        vec4 aNorm4 = vec4(skinned_normal, 0.0);
         normal = normalize(mWorld * vec4(aNorm, 0.0));
 	
         uv = aUV;
