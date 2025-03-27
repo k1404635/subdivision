@@ -185,6 +185,8 @@ export class GUI implements IGUI {
     if (this.dragging) {
       const dx = mouse.screenX - this.prevX;
       const dy = mouse.screenY - this.prevY;
+      let prevx = this.prevX;
+      let prevy = this.prevY;
       this.prevX = mouse.screenX;
       this.prevY = mouse.screenY;
 
@@ -202,11 +204,94 @@ export class GUI implements IGUI {
         case 1: {
           let rotAxis: Vec3 = Vec3.cross(this.camera.forward(), mouseDir);
           rotAxis = rotAxis.normalize();
+          if(this.selectedBone == -1) { // no bone to rotate
+            if (this.fps) {
+              this.camera.rotate(rotAxis, GUI.rotationSpeed);
+            } else {
+              this.camera.orbitTarget(rotAxis, GUI.rotationSpeed);
+            }
+          } else { // rotate highlighted bone
+            let bone: Bone = this.animation.getScene().meshes[0].bones[this.selectedBone];
+            let joint_world: Vec4 = new Vec4([bone.position.x, bone.position.y, bone.position.z, 1.0]);
+            let joint_ndc: Vec4 = new Vec4();
+            this.viewMatrix().multiplyVec4(joint_world, joint_ndc);
+            this.projMatrix().multiplyVec4(joint_ndc, joint_ndc);
+            joint_ndc.scale(1.0 / joint_ndc.w);
+            let ndcx: number = this.width * (joint_ndc.x + 1) / 2.0;
+            let ndcy: number = this.viewPortHeight * (1 - joint_ndc.y) / 2.0;
+            let joint_screen: Vec3 = new Vec3([ndcx, ndcy, 1.0]);
 
-          if (this.fps) {
-            this.camera.rotate(rotAxis, GUI.rotationSpeed);
-          } else {
-            this.camera.orbitTarget(rotAxis, GUI.rotationSpeed);
+            let prev_mouse: Vec3 = new Vec3([prevx, prevy, 1.0]);
+            let curr_mouse: Vec3 = new Vec3([mouse.screenX, mouse.screenY, 1.0]);
+            // console.log("prev_mouse: ", prev_mouse);
+            // console.log("prev_mouse: ", curr_mouse);
+            let joint_prev_mouse: Vec3 = new Vec3();
+            prev_mouse.subtract(joint_screen, joint_prev_mouse);
+            
+            joint_prev_mouse.normalize();
+            let joint_curr_mouse: Vec3 = new Vec3();
+            curr_mouse.subtract(joint_screen, joint_curr_mouse);
+            joint_curr_mouse.normalize();
+
+            let cross: Vec3  = Vec3.cross(joint_prev_mouse, joint_curr_mouse);
+
+            
+
+            console.log("joint prev mouse: ", joint_prev_mouse.xyz);
+            console.log("joint curr mouse: ", joint_curr_mouse.xyz);
+            
+            // let joint_prev_mouse: Vec3 = new Vec3([this.prevX, this.prevY, 0.0]);
+            // let joint_curr_mouse: Vec3 = new Vec3([mouse.screenX, mouse.screenY, 0.0]);
+            
+            let angle: number = Math.acos(Vec3.dot(joint_prev_mouse, joint_curr_mouse));
+            if (cross.z < 0)
+              angle = -angle;
+            console.log("angle: ", angle);
+            // if(joint_prev_mouse.x * joint_curr_mouse.y - joint_prev_mouse.y * joint_curr_mouse.x < 0) {
+            //   angle = -angle;
+            // }
+
+            let axis: Vec3 = this.camera.forward().copy();
+            axis.normalize();
+
+            // let axis: Vec3 = Vec3.cross(joint_prev_mouse, joint_curr_mouse);
+            // axis.normalize();
+
+            let mouse_dir: Vec4 = new Vec4([mouseDir.x, mouseDir.y, mouseDir.z, 0.0]);
+            let look_dir: Vec4 = new Vec4([this.camera.forward().x, this.camera.forward().y, this.camera.forward().z, 0.0]);
+            let rotation_axis: Vec4 = new Vec4([rotAxis.x, rotAxis.y, rotAxis.z, 0.0]);
+            let V_inv: Mat4 = this.viewMatrix().copy().inverse();
+            let D_inv: Mat4 = bone.getDMatrix().copy().inverse();
+            // let P_inv: Mat4 = this.projMatrix().copy().inverse();
+            mouse_dir.multiplyMat4(V_inv, mouse_dir);
+            look_dir.multiplyMat4(V_inv, look_dir);
+            rotation_axis.multiplyMat4(V_inv, rotation_axis);
+
+            let drag_axis: Vec3 = new Vec3(mouseDir.xyz);
+            let rot_axis: Vec3 = new Vec3(mouseDir.xyz);
+            console.log("rot axis:", rot_axis.xyz);
+
+            // rotationSpeed x difference between the prev mouse and current mouse locations 
+            // console.log("rot axis:", rot_axis.xyz);
+            
+            
+            // look_dir.multiplyMat4(D_inv, look_dir)
+
+            let look_axis: Vec3 = new Vec3(look_dir.xyz)
+            // look_axis.normalize();
+            // drag_axis.normalize();
+            let test_axis: Vec3 = Vec3.cross(drag_axis, this.camera.forward());
+            console.log("rot axis:", rot_axis.xyz);
+            test_axis.normalize();
+
+            let quat: Quat = new Quat();
+            Quat.fromAxisAngle(look_axis, angle, quat);
+            // Quat.fromAxisAngle(rotAxis, angle, quat);
+
+            // Quat.fromAxisAngle(axis, angle, quat);
+            let new_R: Mat4 = new Mat4();
+            new_R = quat.toMat4();
+            bone.setRMatrix(new_R, this.animation.getScene().meshes[0].bones);
           }
           break;
         }
@@ -218,6 +303,8 @@ export class GUI implements IGUI {
         default: {
           break;
         }
+        // this.prevX = mouse.screenX;
+        // this.prevY = mouse.screenY;
       }
     } else { // hovering
       let bones: Bone[] = this.animation.getScene().meshes[0].bones;
@@ -323,9 +410,7 @@ export class GUI implements IGUI {
             }
           }
         }
-        // console.log ("<========================>");
       });  
-      // console.log("Selected Bone Index: " + this.selectedBone + "\n");   
     } 
     // TODO: Add logic here:
     // 1) To highlight a bone, if the mouse is hovering over a bone;
