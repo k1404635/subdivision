@@ -84,10 +84,7 @@ export class Bone {
         }
         // console.log("after D: ", this.D.all());
         this.D.copy().toMat3().toQuat(this.rotation);
-        for (let i = 0; i < this.children.length; i++) {
-            let curr = bones[this.children[i]];
-            curr.updatePoints(bones);
-        }
+        this.updatePoints(bones);
     }
     updatePoints(bones) {
         let U_inv = new Mat4();

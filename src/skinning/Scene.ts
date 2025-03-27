@@ -120,11 +120,7 @@ export class Bone {
     // console.log("after D: ", this.D.all());
 
     this.D.copy().toMat3().toQuat(this.rotation);
-
-    for (let i: number = 0; i < this.children.length; i++) {
-      let curr: Bone = bones[this.children[i]];
-      curr.updatePoints(bones);
-    }
+    this.updatePoints(bones);
   }
 
   private updatePoints(bones: Bone[]): void{
