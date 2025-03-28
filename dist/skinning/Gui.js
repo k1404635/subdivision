@@ -157,7 +157,7 @@ export class GUI {
                         Quat.fromAxisAngle(this.camera.forward().copy(), angle, quat);
                         let new_R = new Mat4();
                         new_R = quat.toMat4();
-                        bone.setRMatrix(new_R, this.animation.getScene().meshes[0].bones);
+                        bone.setRMatrix(new_R, this.animation.getScene().meshes[0].bones, true);
                     }
                     this.our_prevX = x;
                     this.our_prevY = y;
@@ -363,13 +363,12 @@ export class GUI {
                 }
                 else { // do bone rolling
                     let bone = this.animation.getScene().meshes[0].bones[this.selectedBone];
-                    let boneD = bone.getDMatrix();
-                    let Dinv = new Mat4();
-                    boneD.inverse(Dinv);
-                    let joint_local = new Vec4();
-                    Dinv.multiplyVec4(new Vec4([bone.position.x, bone.position.y, bone.position.z, 1.0]), joint_local);
-                    let endpoint_local = new Vec4();
-                    Dinv.multiplyVec4(new Vec4([bone.endpoint.x, bone.endpoint.y, bone.endpoint.z, 1.0]), endpoint_local);
+                    let boneD = bone.getDMatrix().copy();
+                    let Dinv = boneD.inverse();
+                    let joint_local = new Vec4([bone.position.x, bone.position.y, bone.position.z, 1.0]);
+                    joint_local.multiplyMat4(Dinv);
+                    let endpoint_local = new Vec4([bone.endpoint.x, bone.endpoint.y, bone.endpoint.z, 1.0]);
+                    endpoint_local.multiplyMat4(Dinv);
                     let temp = new Vec4();
                     endpoint_local.subtract(joint_local, temp);
                     let axis = new Vec3(temp.xyz);
@@ -379,7 +378,7 @@ export class GUI {
                     Quat.fromAxisAngle(axis, angle, quat);
                     let new_R = new Mat4();
                     new_R = quat.toMat4();
-                    bone.setRMatrix(new_R, this.animation.getScene().meshes[0].bones);
+                    bone.setRMatrix(new_R, this.animation.getScene().meshes[0].bones, true);
                     break;
                 }
             }
@@ -407,7 +406,7 @@ export class GUI {
                     Quat.fromAxisAngle(axis, angle, quat);
                     let new_R = new Mat4();
                     new_R = quat.toMat4();
-                    bone.setRMatrix(new_R, this.animation.getScene().meshes[0].bones);
+                    bone.setRMatrix(new_R, this.animation.getScene().meshes[0].bones, true);
                     break;
                 }
             }

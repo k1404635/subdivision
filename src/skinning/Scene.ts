@@ -98,9 +98,13 @@ export class Bone {
     return this.U.copy();
   }
   
-  public setRMatrix(mat: Mat4, bones: Bone[]): void{
-    let temp: Mat4 = mat.copy();
-    temp.multiply(this.R, this.R);
+  public setRMatrix(mat: Mat4, bones: Bone[], rolling: boolean): void{
+    if(rolling) 
+      this.R.multiply(mat);
+    else {
+      let temp: Mat4 = mat.copy();
+      temp.multiply(this.R, this.R);
+    }
     if(this.parent != -1)
       this.setDMatrix(bones[this.parent].getDMatrix(), bones);
     else {
@@ -108,6 +112,7 @@ export class Bone {
     }
 
     this.D.copy().toMat3().toQuat(this.rotation);
+
     this.updatePoints(bones);
   }
 
@@ -127,7 +132,6 @@ export class Bone {
     this.D.multiplyVec4(orig_local_endpoint, temp);
     orig_local_endpoint.multiplyMat4(this.D, temp);
     this.endpoint = new Vec3(temp.xyz);
-
     this.D.copy().toMat3().toQuat(this.rotation);
 
     for (let i: number = 0; i < this.children.length; i++) {

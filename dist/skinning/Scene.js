@@ -63,9 +63,13 @@ export class Bone {
     getUMatrix() {
         return this.U.copy();
     }
-    setRMatrix(mat, bones) {
-        let temp = mat.copy();
-        temp.multiply(this.R, this.R);
+    setRMatrix(mat, bones, rolling) {
+        if (rolling)
+            this.R.multiply(mat);
+        else {
+            let temp = mat.copy();
+            temp.multiply(this.R, this.R);
+        }
         if (this.parent != -1)
             this.setDMatrix(bones[this.parent].getDMatrix(), bones);
         else {

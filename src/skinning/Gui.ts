@@ -216,7 +216,7 @@ export class GUI implements IGUI {
           } else { // rotate highlighted bone
             let bone: Bone = this.animation.getScene().meshes[0].bones[this.selectedBone];
             let joint_world: Vec4 = new Vec4([bone.position.x, bone.position.y, bone.position.z, 1.0]);
-            let joint_ndc: Vec4 = new Vec4();
+            let joint_ndc: Vec4 = new Vec4(); 
             joint_world.multiplyMat4(this.viewMatrix().copy(), joint_ndc);
             joint_ndc.multiplyMat4(this.projMatrix().copy());
             let ndc: Vec3 = new Vec3([joint_ndc.x / joint_ndc.w, joint_ndc.y / joint_ndc.w, joint_ndc.z / joint_ndc.w]);
@@ -244,7 +244,7 @@ export class GUI implements IGUI {
             Quat.fromAxisAngle(this.camera.forward().copy(), angle, quat);
             let new_R: Mat4 = new Mat4();
             new_R = quat.toMat4();
-            bone.setRMatrix(new_R, this.animation.getScene().meshes[0].bones);
+            bone.setRMatrix(new_R, this.animation.getScene().meshes[0].bones, true);
           }
           this.our_prevX = x;
           this.our_prevY = y;
@@ -464,14 +464,13 @@ export class GUI implements IGUI {
           break;
         } else { // do bone rolling
           let bone: Bone = this.animation.getScene().meshes[0].bones[this.selectedBone];
-          let boneD: Mat4 = bone.getDMatrix(); 
-          let Dinv: Mat4 = new Mat4();
-          boneD.inverse(Dinv);
+          let boneD: Mat4 = bone.getDMatrix().copy(); 
+          let Dinv: Mat4 = boneD.inverse();
 
-          let joint_local: Vec4 = new Vec4();
-          Dinv.multiplyVec4(new Vec4([bone.position.x, bone.position.y, bone.position.z, 1.0]), joint_local);
-          let endpoint_local: Vec4 = new Vec4();
-          Dinv.multiplyVec4(new Vec4([bone.endpoint.x, bone.endpoint.y, bone.endpoint.z, 1.0]), endpoint_local);
+          let joint_local: Vec4 = new Vec4([bone.position.x, bone.position.y, bone.position.z, 1.0]);
+          joint_local.multiplyMat4(Dinv);
+          let endpoint_local: Vec4 = new Vec4([bone.endpoint.x, bone.endpoint.y, bone.endpoint.z, 1.0]);
+          endpoint_local.multiplyMat4(Dinv);
 
           let temp: Vec4 = new Vec4();
           endpoint_local.subtract(joint_local, temp);
@@ -483,10 +482,9 @@ export class GUI implements IGUI {
           Quat.fromAxisAngle(axis, angle, quat);
           let new_R: Mat4 = new Mat4();
           new_R = quat.toMat4();
-          bone.setRMatrix(new_R, this.animation.getScene().meshes[0].bones);
+          bone.setRMatrix(new_R, this.animation.getScene().meshes[0].bones, true);
           break;
         }
-  		  
       }
       case "ArrowRight": {
         //TODO: Handle bone rolls when a bone is selected
@@ -514,7 +512,7 @@ export class GUI implements IGUI {
           Quat.fromAxisAngle(axis, angle, quat);
           let new_R: Mat4 = new Mat4();
           new_R = quat.toMat4();
-          bone.setRMatrix(new_R, this.animation.getScene().meshes[0].bones);
+          bone.setRMatrix(new_R, this.animation.getScene().meshes[0].bones, true);
           break;
         }
       }
