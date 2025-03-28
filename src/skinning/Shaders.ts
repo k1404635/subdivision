@@ -95,10 +95,18 @@ export const sceneVSText = `
         //  Compute light direction and transform to camera coordinates
         lightDir = lightPosition - worldPosition;
 
-        vec3 skinned_normal = aNorm * trans;
-        // vec4 aNorm4 = vec4(aNorm, 0.0);
-        vec4 aNorm4 = vec4(skinned_normal, 0.0);
-        normal = normalize(mWorld * vec4(aNorm, 0.0));
+        vec3 norm_quat0 = aNorm + 2.0 * cross(cross(aNorm, jRots[index0].xyz) - jRots[index0].w*aNorm, jRots[index0].xyz);
+        vec3 norm_quat1 = aNorm + 2.0 * cross(cross(aNorm, jRots[index1].xyz) - jRots[index1].w*aNorm, jRots[index1].xyz);
+        vec3 norm_quat2 = aNorm + 2.0 * cross(cross(aNorm, jRots[index2].xyz) - jRots[index2].w*aNorm, jRots[index2].xyz);
+        vec3 norm_quat3 = aNorm + 2.0 * cross(cross(aNorm, jRots[index3].xyz) - jRots[index3].w*aNorm, jRots[index3].xyz);
+
+        vec3 skinned_normal = normalize(
+            skinWeights[0] * norm_quat0 +
+            skinWeights[1] * norm_quat1 +
+            skinWeights[2] * norm_quat2 +
+            skinWeights[3] * norm_quat3
+        );
+        normal = normalize(mWorld * vec4(skinned_normal, 0.0));
 	
         uv = aUV;
     }
