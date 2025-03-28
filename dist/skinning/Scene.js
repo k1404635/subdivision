@@ -42,7 +42,7 @@ export class Bone {
         this.U = new Mat4();
     }
     getDMatrix() {
-        return this.D;
+        return this.D.copy();
     }
     setDMatrix(D, bones) {
         this.D = new Mat4();
@@ -61,7 +61,7 @@ export class Bone {
         }
     }
     getUMatrix() {
-        return this.U;
+        return this.U.copy();
     }
     setRMatrix(mat, bones) {
         let temp = mat.copy();
@@ -96,7 +96,7 @@ export class Bone {
         }
     }
     getRMatrix() {
-        return this.R;
+        return this.R.copy();
     }
     setTMatrix(bones, root) {
         if (!root) {

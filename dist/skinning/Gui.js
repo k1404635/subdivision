@@ -153,13 +153,8 @@ export class GUI {
                         if (cross.z > 0)
                             angle = -angle;
                         // calculate axis
-                        let look_dir = new Vec4([this.camera.forward().x, this.camera.forward().y, this.camera.forward().z, 0.0]);
-                        let V_inv = this.viewMatrix().copy().inverse();
-                        // look_dir.multiplyMat4(V_inv);
-                        // look_dir.multiplyMat4(bone.getDMatrix().copy().inverse());
-                        let look_axis = new Vec3(look_dir.xyz);
                         let quat = new Quat();
-                        Quat.fromAxisAngle(look_axis, angle, quat);
+                        Quat.fromAxisAngle(this.camera.forward().copy(), angle, quat);
                         let new_R = new Mat4();
                         new_R = quat.toMat4();
                         bone.setRMatrix(new_R, this.animation.getScene().meshes[0].bones);

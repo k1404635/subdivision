@@ -82,10 +82,8 @@ export const sceneVSText = `
         vec3 quat1 = vertex1 + 2.0 * cross(cross(vertex1, jRots[index1].xyz) - jRots[index1].w*vertex1, jRots[index1].xyz);
         vec3 quat2 = vertex2 + 2.0 * cross(cross(vertex2, jRots[index2].xyz) - jRots[index2].w*vertex2, jRots[index2].xyz);
         vec3 quat3 = vertex3 + 2.0 * cross(cross(vertex3, jRots[index3].xyz) - jRots[index3].w*vertex3, jRots[index3].xyz);
-        vec3 trans = (skinWeights[0] * vec3(jTrans[index0] + quat0)) +
-            (skinWeights[1] * vec3(jTrans[index1] + quat1)) +
-            (skinWeights[2] * vec3(jTrans[index2] + quat2)) +
-            (skinWeights[3] * vec3(jTrans[index3] + quat3));
+        vec3 trans = (skinWeights[0] * vec3(jTrans[index0] + quat0)) + (skinWeights[1] * vec3(jTrans[index1] + quat1)) +
+            (skinWeights[2] * vec3(jTrans[index2] + quat2)) + (skinWeights[3] * vec3(jTrans[index3] + quat3));
 
         vec4 worldPosition = mWorld * vec4(trans, 1.0);
         gl_Position = mProj * mView * worldPosition;
@@ -98,19 +96,8 @@ export const sceneVSText = `
         vec3 norm_quat2 = aNorm + 2.0 * cross(cross(aNorm, jRots[index2].xyz) - jRots[index2].w*aNorm, jRots[index2].xyz);
         vec3 norm_quat3 = aNorm + 2.0 * cross(cross(aNorm, jRots[index3].xyz) - jRots[index3].w*aNorm, jRots[index3].xyz);
 
-        vec3 skinned_normal = normalize(
-            skinWeights[0] * norm_quat0 +
-            skinWeights[1] * norm_quat1 +
-            skinWeights[2] * norm_quat2 +
-            skinWeights[3] * norm_quat3
-        );
-
-                
-        // vec3 transNorm = (skinWeights[0] * quat0) +
-        //     (skinWeights[1] * quat1) +
-        //     (skinWeights[2] * quat2) +
-        //     (skinWeights[3] * quat3);
-        // vec3 skinned_normal = aNorm * trans;
+        vec3 skinned_normal = normalize(skinWeights[0] * norm_quat0 + skinWeights[1] * norm_quat1 + 
+            skinWeights[2] * norm_quat2 + skinWeights[3] * norm_quat3);
         normal = normalize(mWorld * vec4(skinned_normal, 0.0));
 	
         uv = aUV;

@@ -240,14 +240,8 @@ export class GUI implements IGUI {
               angle = -angle;
 
             // calculate axis
-            let look_dir: Vec4 = new Vec4([this.camera.forward().x, this.camera.forward().y, this.camera.forward().z, 0.0]);
-            let V_inv: Mat4 = this.viewMatrix().copy().inverse();
-            // look_dir.multiplyMat4(V_inv);
-            // look_dir.multiplyMat4(bone.getDMatrix().copy().inverse());
-           
-            let look_axis: Vec3 = new Vec3(look_dir.xyz)
             let quat: Quat = new Quat();
-            Quat.fromAxisAngle(look_axis, angle, quat);
+            Quat.fromAxisAngle(this.camera.forward().copy(), angle, quat);
             let new_R: Mat4 = new Mat4();
             new_R = quat.toMat4();
             bone.setRMatrix(new_R, this.animation.getScene().meshes[0].bones);

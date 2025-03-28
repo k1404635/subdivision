@@ -72,7 +72,7 @@ export class Bone {
   }
 
   public getDMatrix(): Mat4{
-    return this.D;
+    return this.D.copy();
   }
 
   public setDMatrix(D: Mat4, bones: Bone[]): void{
@@ -95,7 +95,7 @@ export class Bone {
   }
 
   public getUMatrix(): Mat4{
-    return this.U;
+    return this.U.copy();
   }
   
   public setRMatrix(mat: Mat4, bones: Bone[]): void{
@@ -137,7 +137,7 @@ export class Bone {
   }
 
   public getRMatrix(): Mat4{
-    return this.R;
+    return this.R.copy();
   }
 
   public setTMatrix(bones: Bone[], root: boolean) {
