@@ -3,6 +3,7 @@ import { CanvasAnimation } from "../lib/webglutils/CanvasAnimation.js";
 import { SkinningAnimation } from "./App.js";
 import { Mat4, Vec3, Vec4, Vec2, Mat2, Quat } from "../lib/TSM.js";
 import { Bone } from "./Scene.js";
+import { Keyframe } from "./Scene.js";
 import { RenderPass } from "../lib/webglutils/RenderPass.js";
 import { Scene } from "../lib/threejs/src/Three.js";
 
@@ -55,6 +56,7 @@ export class GUI implements IGUI {
 
   public time: number;
   public mode: Mode;
+  private keyframes: Keyframe[];
 
   public hoverX: number = 0;
   public hoverY: number = 0;
@@ -82,7 +84,7 @@ export class GUI implements IGUI {
 
   public getNumKeyFrames(): number {
     //TODO: Fix for the status bar in the GUI
-    return 0;
+    return this.keyframes.length;
   }
   
   public getTime(): number { 
@@ -91,7 +93,11 @@ export class GUI implements IGUI {
   
   public getMaxTime(): number { 
     //TODO: The animation should stop after the last keyframe
-    return 0;
+    if(this.keyframes.length == 0)
+      return 0;
+
+    let last: Keyframe = this.keyframes[this.keyframes.length - 1];
+    return last.startTime + last.duration;
   }
 
   public getSelectedBone(): number {
@@ -244,7 +250,7 @@ export class GUI implements IGUI {
             Quat.fromAxisAngle(this.camera.forward().copy(), angle, quat);
             let new_R: Mat4 = new Mat4();
             new_R = quat.toMat4();
-            bone.setRMatrix(new_R, this.animation.getScene().meshes[0].bones, true);
+            bone.setRMatrix(new_R, this.animation.getScene().meshes[0].bones, true, true);
           }
           this.our_prevX = x;
           this.our_prevY = y;
@@ -472,6 +478,11 @@ export class GUI implements IGUI {
           let endpoint_local: Vec4 = new Vec4([bone.endpoint.x, bone.endpoint.y, bone.endpoint.z, 1.0]);
           endpoint_local.multiplyMat4(Dinv);
 
+          // console.log("current joint: ", bone.position.xyz);
+          // console.log("--------------------------------------------");
+          // console.log("original local joint: ", joint_local.xyz);
+          // console.log("original local endpoint: ", endpoint_local.xyz);
+
           let temp: Vec4 = new Vec4();
           endpoint_local.subtract(joint_local, temp);
           let axis: Vec3 = new Vec3(temp.xyz);
@@ -482,7 +493,7 @@ export class GUI implements IGUI {
           Quat.fromAxisAngle(axis, angle, quat);
           let new_R: Mat4 = new Mat4();
           new_R = quat.toMat4();
-          bone.setRMatrix(new_R, this.animation.getScene().meshes[0].bones, true);
+          bone.setRMatrix(new_R, this.animation.getScene().meshes[0].bones, true, true);
           break;
         }
       }
@@ -512,7 +523,7 @@ export class GUI implements IGUI {
           Quat.fromAxisAngle(axis, angle, quat);
           let new_R: Mat4 = new Mat4();
           new_R = quat.toMat4();
-          bone.setRMatrix(new_R, this.animation.getScene().meshes[0].bones, true);
+          bone.setRMatrix(new_R, this.animation.getScene().meshes[0].bones, true, true);
           break;
         }
       }
@@ -527,6 +538,7 @@ export class GUI implements IGUI {
       case "KeyK": {
         if (this.mode === Mode.edit) {
 		      //TODO: Add keyframes if required by project spec
+          // create new keyframe, set keyframe's oritentations, add keyframe to list of keyframes
         }
         break;
       }      
@@ -535,7 +547,8 @@ export class GUI implements IGUI {
         {
           this.mode = Mode.playback;
           this.time = 0;
-        } else if (this.mode === Mode.playback) {
+          // reset bones to start at orientation of first keyframe (setRs using first keyframe's orientations)
+        } else if (this.mode === Mode.playback) { // pausing playing
           this.mode = Mode.edit;
         }
         break;

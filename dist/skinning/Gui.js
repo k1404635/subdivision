@@ -157,7 +157,7 @@ export class GUI {
                         Quat.fromAxisAngle(this.camera.forward().copy(), angle, quat);
                         let new_R = new Mat4();
                         new_R = quat.toMat4();
-                        bone.setRMatrix(new_R, this.animation.getScene().meshes[0].bones, true);
+                        bone.setRMatrix(new_R, this.animation.getScene().meshes[0].bones, true, true);
                     }
                     this.our_prevX = x;
                     this.our_prevY = y;
@@ -369,6 +369,10 @@ export class GUI {
                     joint_local.multiplyMat4(Dinv);
                     let endpoint_local = new Vec4([bone.endpoint.x, bone.endpoint.y, bone.endpoint.z, 1.0]);
                     endpoint_local.multiplyMat4(Dinv);
+                    // console.log("current joint: ", bone.position.xyz);
+                    // console.log("--------------------------------------------");
+                    // console.log("original local joint: ", joint_local.xyz);
+                    // console.log("original local endpoint: ", endpoint_local.xyz);
                     let temp = new Vec4();
                     endpoint_local.subtract(joint_local, temp);
                     let axis = new Vec3(temp.xyz);
@@ -378,7 +382,7 @@ export class GUI {
                     Quat.fromAxisAngle(axis, angle, quat);
                     let new_R = new Mat4();
                     new_R = quat.toMat4();
-                    bone.setRMatrix(new_R, this.animation.getScene().meshes[0].bones, true);
+                    bone.setRMatrix(new_R, this.animation.getScene().meshes[0].bones, true, true);
                     break;
                 }
             }
@@ -406,7 +410,7 @@ export class GUI {
                     Quat.fromAxisAngle(axis, angle, quat);
                     let new_R = new Mat4();
                     new_R = quat.toMat4();
-                    bone.setRMatrix(new_R, this.animation.getScene().meshes[0].bones, true);
+                    bone.setRMatrix(new_R, this.animation.getScene().meshes[0].bones, true, true);
                     break;
                 }
             }
@@ -421,6 +425,7 @@ export class GUI {
             case "KeyK": {
                 if (this.mode === Mode.edit) {
                     //TODO: Add keyframes if required by project spec
+                    // create new keyframe, set keyframe's oritentations, add keyframe to list of keyframes
                 }
                 break;
             }
@@ -428,8 +433,9 @@ export class GUI {
                 if (this.mode === Mode.edit && this.getNumKeyFrames() > 1) {
                     this.mode = Mode.playback;
                     this.time = 0;
+                    // reset bones to start at orientation of first keyframe (setRs using first keyframe's orientations)
                 }
-                else if (this.mode === Mode.playback) {
+                else if (this.mode === Mode.playback) { // pausing playing
                     this.mode = Mode.edit;
                 }
                 break;

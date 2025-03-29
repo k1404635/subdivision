@@ -63,13 +63,15 @@ export class Bone {
     getUMatrix() {
         return this.U.copy();
     }
-    setRMatrix(mat, bones, rolling) {
+    setRMatrix(mat, bones, rolling, accumulate) {
         if (rolling)
             this.R.multiply(mat);
         else {
             let temp = mat.copy();
             temp.multiply(this.R, this.R);
         }
+        if (!accumulate)
+            this.R = mat.copy();
         if (this.parent != -1)
             this.setDMatrix(bones[this.parent].getDMatrix(), bones);
         else {
@@ -77,6 +79,12 @@ export class Bone {
         }
         this.D.copy().toMat3().toQuat(this.rotation);
         this.updatePoints(bones);
+        // console.log("=================================================");
+        // console.log("current joint: ", this.position.xyz);
+        let temp = new Vec4([this.position.x, this.position.y, this.position.z, 1.0]);
+        // console.log("original local joint: ", (temp.multiplyMat4(this.D.copy().inverse())).xyz);
+        temp = new Vec4([this.endpoint.x, this.endpoint.y, this.endpoint.z, 1.0]);
+        // console.log("original local endpoint: ", (temp.multiplyMat4(this.D.copy().inverse())).xyz);
     }
     updatePoints(bones) {
         let U_inv = new Mat4();
@@ -111,6 +119,24 @@ export class Bone {
                 0, 0, 1, 0,
                 translation.x, translation.y, translation.z, 1]);
         }
+    }
+}
+// Class for handling keyframes
+class Keyframe {
+    constructor(time, i, dur) {
+        this.startTime = time;
+        this.duration = dur;
+        this.index = i;
+        this.orientations = new Array(65).fill(new Mat4());
+    }
+    setOrientations(bones) {
+        for (let i = 0; i < bones.length; i++) {
+            let curr = bones[i];
+            this.orientations[i] = curr.getRMatrix();
+        }
+    }
+    getOrientations(boneName) {
+        return this.orientations;
     }
 }
 //Class for handling the overall mesh and rig

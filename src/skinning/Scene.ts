@@ -98,13 +98,15 @@ export class Bone {
     return this.U.copy();
   }
   
-  public setRMatrix(mat: Mat4, bones: Bone[], rolling: boolean): void{
+  public setRMatrix(mat: Mat4, bones: Bone[], rolling: boolean, accumulate: boolean): void{
     if(rolling) 
       this.R.multiply(mat);
     else {
       let temp: Mat4 = mat.copy();
       temp.multiply(this.R, this.R);
     }
+    if(!accumulate)
+      this.R = mat.copy();
     if(this.parent != -1)
       this.setDMatrix(bones[this.parent].getDMatrix(), bones);
     else {
@@ -114,6 +116,12 @@ export class Bone {
     this.D.copy().toMat3().toQuat(this.rotation);
 
     this.updatePoints(bones);
+    // console.log("=================================================");
+    // console.log("current joint: ", this.position.xyz);
+    let temp: Vec4 = new Vec4([this.position.x, this.position.y, this.position.z, 1.0]);
+    // console.log("original local joint: ", (temp.multiplyMat4(this.D.copy().inverse())).xyz);
+    temp = new Vec4([this.endpoint.x, this.endpoint.y, this.endpoint.z, 1.0]);
+    // console.log("original local endpoint: ", (temp.multiplyMat4(this.D.copy().inverse())).xyz);
   }
 
   private updatePoints(bones: Bone[]): void{
@@ -153,6 +161,32 @@ export class Bone {
                           0, 0, 1, 0,
                           translation.x, translation.y, translation.z, 1]);
     }
+  }
+}
+
+// Class for handling keyframes
+export class Keyframe {
+  public startTime: number;
+  public duration: number; // duration between current keyframe and previous
+  public index: number;
+  private orientations: Mat4[]; // Array to hold local R matrices
+
+  constructor(time: number, i: number, dur: number) {
+    this.startTime = time;
+    this.duration = dur;
+    this.index = i;
+    this.orientations = new Array(65).fill(new Mat4());
+  }
+
+  setOrientations(bones: Bone[]): void {
+    for (let i: number = 0; i < bones.length; i++) {
+      let curr: Bone = bones[i];
+      this.orientations[i] = curr.getRMatrix();
+    }
+  }
+
+  getOrientations(boneName: string): Mat4[] | undefined {
+    return this.orientations;
   }
 }
 
