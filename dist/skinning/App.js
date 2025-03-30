@@ -1,11 +1,12 @@
 import { Debugger } from "../lib/webglutils/Debugging.js";
 import { CanvasAnimation } from "../lib/webglutils/CanvasAnimation.js";
 import { Floor } from "../lib/webglutils/Floor.js";
-import { GUI } from "./Gui.js";
+import { GUI, Mode } from "./Gui.js";
 import { sceneFSText, sceneVSText, floorFSText, floorVSText, skeletonFSText, skeletonVSText, sBackVSText, sBackFSText } from "./Shaders.js";
-import { Mat4, Vec4 } from "../lib/TSM.js";
+import { Mat4, Vec4, Quat } from "../lib/TSM.js";
 import { CLoader } from "./AnimationFileLoader.js";
 import { RenderPass } from "../lib/webglutils/RenderPass.js";
+import { Keyframe } from "./Scene.js";
 export class SkinningAnimation extends CanvasAnimation {
     constructor(canvas) {
         super(canvas);
@@ -177,6 +178,35 @@ export class SkinningAnimation extends CanvasAnimation {
         deltaT /= 1000;
         this.getGUI().incrementTime(deltaT);
         //TODO: Handle mesh playback if implementing for project spec
+        if (this.getGUI().mode == Mode.playback) { // playing animation
+            let orientations = [];
+            let gui_time = this.getGUI().time;
+            let keyframes = this.getScene().meshes[0].keyframes;
+            if (gui_time >= this.getGUI().getMaxTime()) { // does doing this still allow regular rotations? Check when testing
+                this.getGUI().mode = Mode.edit;
+            }
+            else {
+                let curr_keyframe = new Keyframe(0, 0, 0);
+                // find current keyframe
+                for (let i = 0; i < keyframes.length; i++) {
+                    curr_keyframe = keyframes[i];
+                    if (gui_time >= curr_keyframe.startTime && gui_time < curr_keyframe.startTime + curr_keyframe.duration)
+                        break;
+                }
+                if (curr_keyframe.index != 0) {
+                    let bones = this.getScene().meshes[0].bones;
+                    for (let i = 0; i < bones.length; i++) {
+                        let curr = bones[i];
+                        let curr_orientation = new Quat();
+                        let prev_keyframe = keyframes[curr_keyframe.index - 1];
+                        let prev_quat = prev_keyframe.getOrientations()[i].copy().toMat3().toQuat();
+                        let curr_quat = curr_keyframe.getOrientations()[i].copy().toMat3().toQuat();
+                        Quat.slerpShort(prev_quat, curr_quat, gui_time - curr_keyframe.startTime, curr_orientation);
+                        curr.setRMatrix(curr_orientation.toMat4(), bones, false, false);
+                    }
+                }
+            }
+        }
         if (this.ctx2) {
             this.ctx2.clearRect(0, 0, this.ctx2.canvas.width, this.ctx2.canvas.height);
             if (this.scene.meshes.length > 0) {

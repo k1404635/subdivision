@@ -1,5 +1,6 @@
 import { Camera } from "../lib/webglutils/Camera.js";
 import { Mat4, Vec3, Vec4, Quat } from "../lib/TSM.js";
+import { Keyframe } from "./Scene.js";
 export var Mode;
 (function (Mode) {
     Mode[Mode["playback"] = 0] = "playback";
@@ -31,14 +32,18 @@ export class GUI {
     }
     getNumKeyFrames() {
         //TODO: Fix for the status bar in the GUI
-        return 0;
+        return this.animation.getScene().meshes[0].keyframes.length;
     }
     getTime() {
         return this.time;
     }
     getMaxTime() {
         //TODO: The animation should stop after the last keyframe
-        return 0;
+        let keyframes = this.animation.getScene().meshes[0].keyframes;
+        if (keyframes.length == 0)
+            return 0;
+        let last = keyframes[keyframes.length - 1];
+        return last.startTime + last.duration;
     }
     getSelectedBone() {
         return this.selectedBone;
@@ -425,7 +430,14 @@ export class GUI {
             case "KeyK": {
                 if (this.mode === Mode.edit) {
                     //TODO: Add keyframes if required by project spec
-                    // create new keyframe, set keyframe's oritentations, add keyframe to list of keyframes
+                    let newKeyframe;
+                    let keyframes_len = this.animation.getScene().meshes[0].keyframes.length;
+                    if (keyframes_len == 0)
+                        newKeyframe = new Keyframe(this.getMaxTime(), keyframes_len, 0);
+                    else
+                        newKeyframe = new Keyframe(this.getMaxTime(), keyframes_len, 1);
+                    newKeyframe.setOrientations(this.animation.getScene().meshes[0].bones);
+                    this.animation.getScene().meshes[0].keyframes.push(newKeyframe);
                 }
                 break;
             }
@@ -433,7 +445,7 @@ export class GUI {
                 if (this.mode === Mode.edit && this.getNumKeyFrames() > 1) {
                     this.mode = Mode.playback;
                     this.time = 0;
-                    // reset bones to start at orientation of first keyframe (setRs using first keyframe's orientations)
+                    this.animation.getScene().meshes[0].resetOrientations();
                 }
                 else if (this.mode === Mode.playback) { // pausing playing
                     this.mode = Mode.edit;

@@ -56,7 +56,6 @@ export class GUI implements IGUI {
 
   public time: number;
   public mode: Mode;
-  private keyframes: Keyframe[];
 
   public hoverX: number = 0;
   public hoverY: number = 0;
@@ -84,7 +83,7 @@ export class GUI implements IGUI {
 
   public getNumKeyFrames(): number {
     //TODO: Fix for the status bar in the GUI
-    return this.keyframes.length;
+    return this.animation.getScene().meshes[0].keyframes.length;
   }
   
   public getTime(): number { 
@@ -93,10 +92,11 @@ export class GUI implements IGUI {
   
   public getMaxTime(): number { 
     //TODO: The animation should stop after the last keyframe
-    if(this.keyframes.length == 0)
+    let keyframes: Keyframe[] = this.animation.getScene().meshes[0].keyframes;
+    if(keyframes.length == 0)
       return 0;
 
-    let last: Keyframe = this.keyframes[this.keyframes.length - 1];
+    let last: Keyframe = keyframes[keyframes.length - 1];
     return last.startTime + last.duration;
   }
 
@@ -538,7 +538,14 @@ export class GUI implements IGUI {
       case "KeyK": {
         if (this.mode === Mode.edit) {
 		      //TODO: Add keyframes if required by project spec
-          // create new keyframe, set keyframe's oritentations, add keyframe to list of keyframes
+          let newKeyframe: Keyframe;
+          let keyframes_len: number = this.animation.getScene().meshes[0].keyframes.length;
+          if(keyframes_len == 0) 
+            newKeyframe = new Keyframe(this.getMaxTime(), keyframes_len, 0);
+          else
+            newKeyframe = new Keyframe(this.getMaxTime(), keyframes_len, 1);
+          newKeyframe.setOrientations(this.animation.getScene().meshes[0].bones);
+          this.animation.getScene().meshes[0].keyframes.push(newKeyframe);
         }
         break;
       }      
@@ -547,7 +554,7 @@ export class GUI implements IGUI {
         {
           this.mode = Mode.playback;
           this.time = 0;
-          // reset bones to start at orientation of first keyframe (setRs using first keyframe's orientations)
+          this.animation.getScene().meshes[0].resetOrientations();
         } else if (this.mode === Mode.playback) { // pausing playing
           this.mode = Mode.edit;
         }

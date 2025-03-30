@@ -175,17 +175,17 @@ export class Keyframe {
     this.startTime = time;
     this.duration = dur;
     this.index = i;
-    this.orientations = new Array(65).fill(new Mat4());
+    this.orientations = [];
   }
 
   setOrientations(bones: Bone[]): void {
     for (let i: number = 0; i < bones.length; i++) {
       let curr: Bone = bones[i];
-      this.orientations[i] = curr.getRMatrix();
+      this.orientations.push(curr.getRMatrix());
     }
   }
 
-  getOrientations(boneName: string): Mat4[] | undefined {
+  getOrientations(): Mat4[] {
     return this.orientations;
   }
 }
@@ -198,6 +198,7 @@ export class Mesh {
   public bones: Bone[];
   public materialName: string;
   public imgSrc: String | null;
+  public keyframes: Keyframe[];
 
   private boneIndices: number[];
   private bonePositions: Float32Array;
@@ -234,9 +235,23 @@ export class Mesh {
     this.boneIndices = Array.from(mesh.boneIndices);
     this.bonePositions = new Float32Array(mesh.bonePositions);
     this.boneIndexAttribute = new Float32Array(mesh.boneIndexAttribute);
+    this.keyframes = [];
   }
 
   //TODO: Create functionality for bone manipulation/key-framing
+
+  // sets bone orientations to orientations from parameter
+  public updateOrientations(orientations: Mat4[]): void {
+    for (let i: number = 0; i < this.bones.length; i++) {
+      let curr: Bone = this.bones[i];
+      curr.setRMatrix(orientations[i], this.bones, false, false);
+    }
+  }
+
+  // sets bone orientations to first keyframe's orientations
+  public resetOrientations(): void {
+    this.updateOrientations(this.keyframes[0].getOrientations());
+  }
 
   public getBoneIndices(): Uint32Array {
     return new Uint32Array(this.boneIndices);
