@@ -44,7 +44,10 @@ export class SkinningAnimation extends CanvasAnimation {
 
   /* Scrub bar background rendering info */
   private sBackRenderPass: RenderPass;
-  
+
+  /* Preview rendering info */
+  private previewRenderPass: RenderPass;
+
   /* Global Rendering Info */
   private lightPosition: Vec4;
   private backgroundColor: Vec4;
@@ -52,6 +55,8 @@ export class SkinningAnimation extends CanvasAnimation {
   private canvas2d: HTMLCanvasElement;
   private ctx2: CanvasRenderingContext2D | null;
 
+  /* Textures for Preview*/
+  private previewTextures: WebGLTexture[];
 
   constructor(canvas: HTMLCanvasElement) {
     super(canvas);
@@ -84,6 +89,7 @@ export class SkinningAnimation extends CanvasAnimation {
     this.sBackRenderPass = new RenderPass(this.extVAO, gl, sBackVSText, sBackFSText);
     
     this.initGui();
+    this.previewTextures = [];
 	
     this.millis = new Date().getTime();
   }
@@ -98,6 +104,7 @@ export class SkinningAnimation extends CanvasAnimation {
   public reset(): void {
       this.gui.reset();
       this.setScene(this.loadedScene);
+      this.previewTextures = [];
   }
 
   public initGui(): void {
@@ -348,6 +355,12 @@ export class SkinningAnimation extends CanvasAnimation {
       this.sBackRenderPass.draw();      
     }    
 
+    /* Draw preview section */
+    // if (this.scene.meshes.length > 0) {
+    //   gl.viewport(800, 0, 320, 800);
+    //   this.sBackRenderPass.draw();      
+    // }    
+
   }
 
   private drawScene(x: number, y: number, width: number, height: number): void {
@@ -379,10 +392,59 @@ export class SkinningAnimation extends CanvasAnimation {
     this.scene = new CLoader(fileLocation);
     this.scene.load(() => this.initScene());
   }
+
+  public renderToTexture(): void {
+    // Drawing
+    const gl: WebGLRenderingContext = this.ctx;
+    const bg: Vec4 = this.backgroundColor;
+    gl.clearColor(bg.r, bg.g, bg.b, bg.a);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.enable(gl.CULL_FACE);
+    gl.enable(gl.DEPTH_TEST);
+    gl.frontFace(gl.CCW);
+    gl.cullFace(gl.BACK); 
+
+    // create to render to
+    const targetTextureWidth = 256;
+    const targetTextureHeight = 256;
+    const targetTexture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, targetTexture);
+
+    // define size and format of level 0
+    const level = 0;
+    const internalFormat = gl.RGBA;
+    const border = 0;
+    const format = gl.RGBA;
+    const type = gl.UNSIGNED_BYTE;
+    const data = null;
+    gl.texImage2D(gl.TEXTURE_2D, level, internalFormat,
+                  targetTextureWidth, targetTextureHeight, border,
+                  format, type, data);
+   
+    // set the filtering so we don't need mips
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+    // Create and bind the framebuffer
+    const fb = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+
+    // attach the texture as the first color attachment
+    const attachmentPoint = gl.COLOR_ATTACHMENT0;
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, attachmentPoint, gl.TEXTURE_2D, targetTexture, level);
+
+    this.drawScene(0, 0, targetTextureWidth, targetTextureHeight); 
+
+    // Reset framebuffer binding to default (the screen)
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    this.previewTextures.push(targetTexture);
+  }
 }
 
 export function initializeCanvas(): void {
   const canvas = document.getElementById("glCanvas") as HTMLCanvasElement;
+  // canvas.width += 320;
   /* Start drawing */
   const canvasAnimation: SkinningAnimation = new SkinningAnimation(canvas);
   canvasAnimation.start();

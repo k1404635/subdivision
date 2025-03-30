@@ -546,6 +546,7 @@ export class GUI implements IGUI {
             newKeyframe = new Keyframe(this.getMaxTime(), keyframes_len, 1);
           newKeyframe.setOrientations(this.animation.getScene().meshes[0].bones);
           this.animation.getScene().meshes[0].keyframes.push(newKeyframe);
+          this.animation.renderToTexture();
         }
         break;
       }      
