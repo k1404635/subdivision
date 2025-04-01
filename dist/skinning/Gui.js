@@ -23,7 +23,8 @@ export class GUI {
         this.hoverY = 0;
         this.height = canvas.height;
         this.viewPortHeight = this.height - 200;
-        this.width = canvas.width;
+        this.width = canvas.width + 320;
+        this.viewPortWidth = this.width - 320;
         this.prevX = 0;
         this.prevY = 0;
         this.animation = animation;
@@ -56,7 +57,7 @@ export class GUI {
         this.dragging = false;
         this.time = 0;
         this.mode = Mode.edit;
-        this.camera = new Camera(new Vec3([0, 0, -6]), new Vec3([0, 0, 0]), new Vec3([0, 1, 0]), 45, this.width / this.viewPortHeight, 0.1, 1000.0);
+        this.camera = new Camera(new Vec3([0, 0, -6]), new Vec3([0, 0, 0]), new Vec3([0, 1, 0]), 45, this.viewPortWidth / this.viewPortHeight, 0.1, 1000.0);
     }
     /**
      * Sets the GUI's camera to the given camera
@@ -143,7 +144,7 @@ export class GUI {
                         joint_world.multiplyMat4(this.viewMatrix().copy(), joint_ndc);
                         joint_ndc.multiplyMat4(this.projMatrix().copy());
                         let ndc = new Vec3([joint_ndc.x / joint_ndc.w, joint_ndc.y / joint_ndc.w, joint_ndc.z / joint_ndc.w]);
-                        let ndcx = (ndc.x + 1) / 2.0 * this.width;
+                        let ndcx = (ndc.x + 1) / 2.0 * this.viewPortWidth;
                         let ndcy = (1 - ndc.y) / 2.0 * this.viewPortHeight;
                         let joint_screen = new Vec3([ndcx, ndcy, 0.0]);
                         let prev_mouse = new Vec3([this.our_prevX, this.our_prevY, 0.0]);
@@ -182,7 +183,7 @@ export class GUI {
         }
         else { // hovering
             let bones = this.animation.getScene().meshes[0].bones;
-            let ndc = new Vec4([((2.0 * x) / this.width) - 1.0, 1.0 - ((2.0 * y) / this.viewPortHeight), -1.0, 0.0]);
+            let ndc = new Vec4([((2.0 * x) / this.viewPortWidth) - 1.0, 1.0 - ((2.0 * y) / this.viewPortHeight), -1.0, 0.0]);
             let V_inv = new Mat4();
             let P_inv = new Mat4();
             this.viewMatrix().inverse(V_inv);
@@ -309,34 +310,42 @@ export class GUI {
     onKeydown(key) {
         switch (key.code) {
             case "Digit1": {
+                this.animation.previewTextures = [];
                 this.animation.setScene("./static/assets/skinning/split_cube.dae");
                 break;
             }
             case "Digit2": {
+                this.animation.previewTextures = [];
                 this.animation.setScene("./static/assets/skinning/long_cubes.dae");
                 break;
             }
             case "Digit3": {
+                this.animation.previewTextures = [];
                 this.animation.setScene("./static/assets/skinning/simple_art.dae");
                 break;
             }
             case "Digit4": {
+                this.animation.previewTextures = [];
                 this.animation.setScene("./static/assets/skinning/mapped_cube.dae");
                 break;
             }
             case "Digit5": {
+                this.animation.previewTextures = [];
                 this.animation.setScene("./static/assets/skinning/robot.dae");
                 break;
             }
             case "Digit6": {
+                this.animation.previewTextures = [];
                 this.animation.setScene("./static/assets/skinning/head.dae");
                 break;
             }
             case "Digit7": {
+                this.animation.previewTextures = [];
                 this.animation.setScene("./static/assets/skinning/wolf.dae");
                 break;
             }
             case "Digit8": {
+                this.animation.previewTextures = [];
                 this.animation.setScene("./static/assets/skinning/satellite.dae");
                 break;
             }
@@ -374,10 +383,6 @@ export class GUI {
                     joint_local.multiplyMat4(Dinv);
                     let endpoint_local = new Vec4([bone.endpoint.x, bone.endpoint.y, bone.endpoint.z, 1.0]);
                     endpoint_local.multiplyMat4(Dinv);
-                    // console.log("current joint: ", bone.position.xyz);
-                    // console.log("--------------------------------------------");
-                    // console.log("original local joint: ", joint_local.xyz);
-                    // console.log("original local endpoint: ", endpoint_local.xyz);
                     let temp = new Vec4();
                     endpoint_local.subtract(joint_local, temp);
                     let axis = new Vec3(temp.xyz);

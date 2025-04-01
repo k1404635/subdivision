@@ -180,4 +180,75 @@ export const sBackFSText = `
     }
 
 `;
+export const previewVSText = `
+    precision mediump float;
+
+    attribute vec2 vertPosition;
+
+    varying vec2 uv;
+
+    void main() {
+        gl_Position = vec4(vertPosition, 0.0, 1.0);
+        uv = vertPosition;
+        uv.x = (1.0 + uv.x) / 2.0;
+        uv.y = (1.0 + uv.y) / 2.0;
+    }
+`;
+export const previewFSText = `
+    precision mediump float;
+
+    varying vec2 uv;
+
+    void main () {
+        gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+    }
+
+`;
+export const quadVSText = `
+    precision mediump float;
+
+    attribute vec2 vertPosition;
+    attribute vec2 texcoords;
+
+    varying vec2 uv;
+    varying vec2 tc;
+
+    uniform sampler2D tex0;
+    uniform sampler2D tex1;
+    uniform sampler2D tex2;
+    uniform sampler2D tex3;
+
+    void main() {
+        gl_Position = vec4(vertPosition, 0.0, 1.0);
+        uv = vertPosition;
+        tc = vec2(texcoords.x, texcoords.y);
+
+        uv.x = (1.0 + uv.x) / 2.0;
+        uv.y = (1.0 + uv.y) / 2.0;
+    }
+`;
+export const quadFSText = `
+    precision mediump float;
+
+    varying vec2 uv;
+    varying vec2 tc;
+    //bring in number of keyframes
+
+    uniform sampler2D tex0;
+    uniform sampler2D tex1;
+    uniform sampler2D tex2;
+    uniform sampler2D tex3;
+
+    void main () {
+        if((abs(uv.y-.14) < .1) && (abs(uv.x-.5) < 0.667)) { //last one
+            gl_FragColor = texture2D(tex0, tc);
+        } else if((abs(uv.y-.38) < .1) && (abs(uv.x-.5) < 0.667)) {
+            gl_FragColor = texture2D(tex1, tc);
+        } else if((abs(uv.y-0.62) < .1) && (abs(uv.x-.5) < 0.667)) {
+            gl_FragColor = texture2D(tex2, tc);
+        } else if((abs(uv.y-0.86) < .1) && (abs(uv.x-.5) < 0.667)) { //first one
+            gl_FragColor = texture2D(tex3, tc);
+        }
+    }
+`;
 //# sourceMappingURL=Shaders.js.map

@@ -79,12 +79,8 @@ export class Bone {
         }
         this.D.copy().toMat3().toQuat(this.rotation);
         this.updatePoints(bones);
-        // console.log("=================================================");
-        // console.log("current joint: ", this.position.xyz);
         let temp = new Vec4([this.position.x, this.position.y, this.position.z, 1.0]);
-        // console.log("original local joint: ", (temp.multiplyMat4(this.D.copy().inverse())).xyz);
         temp = new Vec4([this.endpoint.x, this.endpoint.y, this.endpoint.z, 1.0]);
-        // console.log("original local endpoint: ", (temp.multiplyMat4(this.D.copy().inverse())).xyz);
     }
     updatePoints(bones) {
         let U_inv = new Mat4();

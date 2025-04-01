@@ -2,7 +2,7 @@ import { Debugger } from "../lib/webglutils/Debugging.js";
 import { CanvasAnimation } from "../lib/webglutils/CanvasAnimation.js";
 import { Floor } from "../lib/webglutils/Floor.js";
 import { GUI, Mode } from "./Gui.js";
-import { sceneFSText, sceneVSText, floorFSText, floorVSText, skeletonFSText, skeletonVSText, sBackVSText, sBackFSText } from "./Shaders.js";
+import { sceneFSText, sceneVSText, floorFSText, floorVSText, skeletonFSText, skeletonVSText, sBackVSText, sBackFSText, previewVSText, previewFSText, quadVSText, quadFSText } from "./Shaders.js";
 import { Mat4, Vec4, Quat } from "../lib/TSM.js";
 import { CLoader } from "./AnimationFileLoader.js";
 import { RenderPass } from "../lib/webglutils/RenderPass.js";
@@ -30,8 +30,12 @@ export class SkinningAnimation extends CanvasAnimation {
         this.scene = new CLoader("");
         // Status bar
         this.sBackRenderPass = new RenderPass(this.extVAO, gl, sBackVSText, sBackFSText);
-        this.initGui();
+        // Preview section
+        this.previewRenderPass = new RenderPass(this.extVAO, gl, previewVSText, previewFSText);
+        // Textured Quads
+        this.quadRenderPass = new RenderPass(this.extVAO, gl, quadVSText, quadFSText);
         this.previewTextures = [];
+        this.initGui();
         this.millis = new Date().getTime();
     }
     getScene() {
@@ -52,6 +56,64 @@ export class SkinningAnimation extends CanvasAnimation {
         this.sBackRenderPass.addAttribute("vertPosition", 2, this.ctx.FLOAT, false, 2 * Float32Array.BYTES_PER_ELEMENT, 0, undefined, verts);
         this.sBackRenderPass.setDrawData(this.ctx.TRIANGLES, 6, this.ctx.UNSIGNED_INT, 0);
         this.sBackRenderPass.setup();
+        // Preview background 
+        this.previewRenderPass.setIndexBufferData(new Uint32Array([1, 0, 2, 2, 0, 3]));
+        this.previewRenderPass.addAttribute("vertPosition", 2, this.ctx.FLOAT, false, 2 * Float32Array.BYTES_PER_ELEMENT, 0, undefined, verts);
+        this.previewRenderPass.setDrawData(this.ctx.TRIANGLES, 6, this.ctx.UNSIGNED_INT, 0);
+        this.previewRenderPass.setup();
+        // Textured Quads
+        let quad_verts = new Float32Array([
+            -0.667, 0.92,
+            -0.667, 0.52,
+            0.667, 0.92,
+            0.667, 0.52,
+            -0.667, 0.44,
+            -0.667, 0.04,
+            0.667, 0.44,
+            0.667, 0.04,
+            -0.667, -0.04,
+            -0.667, -0.44,
+            0.667, -0.04,
+            0.667, -0.44,
+            -0.667, -0.52,
+            -0.667, -0.92,
+            0.667, -0.52,
+            0.667, -0.92,
+        ]);
+        let quad_indices = new Uint32Array([
+            0, 1, 2,
+            2, 1, 3,
+            4, 5, 6,
+            6, 5, 7,
+            8, 9, 10,
+            10, 9, 11,
+            12, 13, 14,
+            14, 13, 15
+        ]);
+        let texcoords = new Float32Array([
+            0, 1,
+            0, 0,
+            1, 1,
+            1, 0,
+            0, 1,
+            0, 0,
+            1, 1,
+            1, 0,
+            0, 1,
+            0, 0,
+            1, 1,
+            1, 0,
+            0, 1,
+            0, 0,
+            1, 1,
+            1, 0
+        ]);
+        let gl = this.ctx;
+        this.quadRenderPass.setIndexBufferData(quad_indices);
+        this.quadRenderPass.addAttribute("vertPosition", 2, this.ctx.FLOAT, false, 2 * Float32Array.BYTES_PER_ELEMENT, 0, undefined, quad_verts);
+        this.quadRenderPass.addAttribute("texcoords", 2, this.ctx.FLOAT, false, 2 * Uint32Array.BYTES_PER_ELEMENT, 0, undefined, texcoords);
+        this.quadRenderPass.setDrawData(this.ctx.TRIANGLES, 24, this.ctx.UNSIGNED_INT, 0);
+        this.quadRenderPass.setup();
     }
     initScene() {
         if (this.scene.meshes.length === 0) {
@@ -234,8 +296,13 @@ export class SkinningAnimation extends CanvasAnimation {
         /* Draw preview section */
         // if (this.scene.meshes.length > 0) {
         //   gl.viewport(800, 0, 320, 800);
-        //   this.sBackRenderPass.draw();      
+        //   this.previewRenderPass.draw();      
         // }    
+        /* Draw quads in preview section */
+        if (this.scene.meshes.length > 0) {
+            gl.viewport(800, 0, 320, 800);
+            this.quadRenderPass.draw();
+        }
     }
     drawScene(x, y, width, height) {
         const gl = this.ctx;
@@ -273,8 +340,8 @@ export class SkinningAnimation extends CanvasAnimation {
         gl.frontFace(gl.CCW);
         gl.cullFace(gl.BACK);
         // create to render to
-        const targetTextureWidth = 256;
-        const targetTextureHeight = 256;
+        const targetTextureWidth = 800;
+        const targetTextureHeight = 600;
         const targetTexture = gl.createTexture();
         gl.bindTexture(gl.TEXTURE_2D, targetTexture);
         // define size and format of level 0
@@ -297,13 +364,65 @@ export class SkinningAnimation extends CanvasAnimation {
         gl.framebufferTexture2D(gl.FRAMEBUFFER, attachmentPoint, gl.TEXTURE_2D, targetTexture, level);
         this.drawScene(0, 0, targetTextureWidth, targetTextureHeight);
         // Reset framebuffer binding to default (the screen)
+        gl.bindTexture(gl.TEXTURE_2D, null);
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
         this.previewTextures.push(targetTexture);
+        // set uniforms for drawing the preview
+        let num_textures = this.previewTextures.length;
+        let default_texture = this.createDefaultTexture();
+        console.log("num_textures: ", num_textures);
+        let texture = default_texture;
+        if (num_textures > 0)
+            texture = this.previewTextures[0];
+        this.quadRenderPass.addUniform("tex0", (gl, loc) => {
+            gl.activeTexture(gl.TEXTURE0);
+            gl.bindTexture(gl.TEXTURE_2D, texture);
+            gl.uniform1i(loc, 0);
+        });
+        gl.bindTexture(gl.TEXTURE_2D, null);
+        texture = default_texture;
+        if (num_textures > 1)
+            texture = this.previewTextures[1];
+        this.quadRenderPass.addUniform("tex1", (gl, loc) => {
+            gl.activeTexture(gl.TEXTURE1);
+            gl.bindTexture(gl.TEXTURE_2D, texture);
+            gl.uniform1i(loc, 1);
+        });
+        gl.bindTexture(gl.TEXTURE_2D, null);
+        texture = default_texture;
+        if (num_textures > 2)
+            texture = this.previewTextures[2];
+        this.quadRenderPass.addUniform("tex2", (gl, loc) => {
+            gl.activeTexture(gl.TEXTURE2);
+            gl.bindTexture(gl.TEXTURE_2D, texture);
+            gl.uniform1i(loc, 2);
+        });
+        gl.bindTexture(gl.TEXTURE_2D, null);
+        texture = default_texture;
+        if (num_textures > 3)
+            texture = this.previewTextures[3];
+        this.quadRenderPass.addUniform("tex3", (gl, loc) => {
+            gl.activeTexture(gl.TEXTURE3);
+            gl.bindTexture(gl.TEXTURE_2D, texture);
+            gl.uniform1i(loc, 3);
+        });
+        gl.bindTexture(gl.TEXTURE_2D, null);
+        this.quadRenderPass.setDrawData(this.ctx.TRIANGLES, 24, this.ctx.UNSIGNED_INT, 0);
+        this.quadRenderPass.setup();
+    }
+    createDefaultTexture() {
+        const gl = this.ctx;
+        let texture = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        // Set a 1x1 transparent pixel
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([255, 0, 0, 1]));
+        gl.bindTexture(gl.TEXTURE_2D, null);
+        return texture;
     }
 }
 export function initializeCanvas() {
     const canvas = document.getElementById("glCanvas");
-    // canvas.width += 320;
+    canvas.width += 320;
     /* Start drawing */
     const canvasAnimation = new SkinningAnimation(canvas);
     canvasAnimation.start();
