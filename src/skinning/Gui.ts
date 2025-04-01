@@ -53,7 +53,8 @@ export class GUI implements IGUI {
   private animation: SkinningAnimation;
 
   private selectedBone: number = -1;
-  private boneDragging: boolean;
+
+  private selectedKeyframe: number = -1;
 
   public time: number;
   public mode: Mode;
@@ -113,7 +114,7 @@ export class GUI implements IGUI {
     this.fps = false;
     this.dragging = false;
     this.time = 0;
-	this.mode = Mode.edit;
+	  this.mode = Mode.edit;
     
     this.camera = new Camera(
       new Vec3([0, 0, -6]),
@@ -412,41 +413,49 @@ export class GUI implements IGUI {
       case "Digit1": {
         this.animation.previewTextures = [];
         this.animation.setScene("./static/assets/skinning/split_cube.dae");
+        this.animation.initGui();
         break;
       }
       case "Digit2": {
         this.animation.previewTextures = [];
         this.animation.setScene("./static/assets/skinning/long_cubes.dae");
+        this.animation.initGui();
         break;
       }
       case "Digit3": {
         this.animation.previewTextures = [];
         this.animation.setScene("./static/assets/skinning/simple_art.dae");
+        this.animation.initGui();
         break;
       }      
       case "Digit4": {
         this.animation.previewTextures = [];
         this.animation.setScene("./static/assets/skinning/mapped_cube.dae");
+        this.animation.initGui();
         break;
       }
       case "Digit5": {
         this.animation.previewTextures = [];
         this.animation.setScene("./static/assets/skinning/robot.dae");
+        this.animation.initGui();
         break;
       }
       case "Digit6": {
         this.animation.previewTextures = [];
         this.animation.setScene("./static/assets/skinning/head.dae");
+        this.animation.initGui();
         break;
       }
       case "Digit7": {
         this.animation.previewTextures = [];
         this.animation.setScene("./static/assets/skinning/wolf.dae");
+        this.animation.initGui();
         break;
       }
       case "Digit8": {
         this.animation.previewTextures = [];
         this.animation.setScene("./static/assets/skinning/satellite.dae");
+        this.animation.initGui();
         break;
       }
       case "KeyW": {
@@ -563,6 +572,27 @@ export class GUI implements IGUI {
           this.animation.getScene().meshes[0].resetOrientations();
         } else if (this.mode === Mode.playback) { // pausing playing
           this.mode = Mode.edit;
+        }
+        break;
+      }
+      case "Equal": {
+        if(this.selectedKeyframe != -1) {
+          let keyframes: Keyframe[] = this.animation.getScene().meshes[0].keyframes;
+          this.animation.getScene().meshes[0].updateOrientations(keyframes[this.selectedKeyframe].getOrientations());
+        }
+        break;
+      }
+      case "Delete": { 
+        if(this.selectedKeyframe != -1) {
+          this.animation.previewTextures.splice(this.selectedKeyframe, 1);
+          this.animation.loadTextures();
+        }
+        break;
+      }
+      case "KeyU": { 
+        if(this.selectedKeyframe != -1) {
+          let bones: Bone[] = this.animation.getScene().meshes[0].bones;
+          this.animation.getScene().meshes[0].keyframes[this.selectedKeyframe].setOrientations(bones);
         }
         break;
       }

@@ -255,13 +255,13 @@ export const quadFSText = `
 
     void main () {
         if((abs(uv.y-.14) < .1) && (abs(uv.x-.5) < 0.667)) { //last one
-            gl_FragColor = texture2D(tex0, tc);
-        } else if((abs(uv.y-.38) < .1) && (abs(uv.x-.5) < 0.667)) {
-            gl_FragColor = texture2D(tex1, tc);
-        } else if((abs(uv.y-0.62) < .1) && (abs(uv.x-.5) < 0.667)) {
-            gl_FragColor = texture2D(tex2, tc);
-        } else if((abs(uv.y-0.86) < .1) && (abs(uv.x-.5) < 0.667)) { //first one
             gl_FragColor = texture2D(tex3, tc);
+        } else if((abs(uv.y-.38) < .1) && (abs(uv.x-.5) < 0.667)) {
+            gl_FragColor = texture2D(tex2, tc);
+        } else if((abs(uv.y-0.62) < .1) && (abs(uv.x-.5) < 0.667)) {
+            gl_FragColor = texture2D(tex1, tc);
+        } else if((abs(uv.y-0.86) < .1) && (abs(uv.x-.5) < 0.667)) { //first one
+            gl_FragColor = texture2D(tex0, tc);
         }
     }
 `;

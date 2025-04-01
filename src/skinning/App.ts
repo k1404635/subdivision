@@ -118,6 +118,7 @@ export class SkinningAnimation extends CanvasAnimation {
       this.gui.reset();
       this.setScene(this.loadedScene);
       this.previewTextures = [];
+      this.initGui();
   }
 
   public initGui(): void {
@@ -205,6 +206,8 @@ export class SkinningAnimation extends CanvasAnimation {
     this.quadRenderPass.addAttribute("texcoords", 2, this.ctx.FLOAT, false,
       2 * Uint32Array.BYTES_PER_ELEMENT, 0, undefined, texcoords);
    
+    this.loadTextures();
+
     this.quadRenderPass.setDrawData(this.ctx.TRIANGLES, 24, this.ctx.UNSIGNED_INT, 0);
     this.quadRenderPass.setup();
     }
@@ -524,6 +527,11 @@ export class SkinningAnimation extends CanvasAnimation {
     const fb = gl.createFramebuffer();
     gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
 
+    const depthBuffer = gl.createRenderbuffer();
+    gl.bindRenderbuffer(gl.RENDERBUFFER, depthBuffer);
+    gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, targetTextureWidth, targetTextureHeight);
+    gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, depthBuffer);
+
     // attach the texture as the first color attachment
     const attachmentPoint = gl.COLOR_ATTACHMENT0;
     gl.framebufferTexture2D(gl.FRAMEBUFFER, attachmentPoint, gl.TEXTURE_2D, targetTexture, level);
@@ -535,70 +543,114 @@ export class SkinningAnimation extends CanvasAnimation {
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     this.previewTextures.push(targetTexture);
 
-
-    // set uniforms for drawing the preview
-    let num_textures: number = this.previewTextures.length;
-    let default_texture: WebGLTexture = this.createDefaultTexture();
-    console.log("num_textures: ", num_textures);
-    let texture: WebGLTexture = default_texture; 
-
-    if (num_textures > 0)
-      texture = this.previewTextures[0];
-    this.quadRenderPass.addUniform("tex0",
-      (gl: WebGLRenderingContext, loc: WebGLUniformLocation) => {
-        gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, texture);
-        gl.uniform1i(loc, 0);
-    }); 
-    gl.bindTexture(gl.TEXTURE_2D, null);
-    texture = default_texture;
-    if (num_textures > 1)
-      texture = this.previewTextures[1];
-    this.quadRenderPass.addUniform("tex1",
-      (gl: WebGLRenderingContext, loc: WebGLUniformLocation) => {
-        gl.activeTexture(gl.TEXTURE1);
-        gl.bindTexture(gl.TEXTURE_2D, texture);
-        gl.uniform1i(loc, 1);
-    });
-    gl.bindTexture(gl.TEXTURE_2D, null);
-    texture = default_texture;
-    if (num_textures > 2)
-      texture = this.previewTextures[2];
-    this.quadRenderPass.addUniform("tex2",
-      (gl: WebGLRenderingContext, loc: WebGLUniformLocation) => {
-        gl.activeTexture(gl.TEXTURE2);
-        gl.bindTexture(gl.TEXTURE_2D, texture);
-        gl.uniform1i(loc, 2);
-    });
-    gl.bindTexture(gl.TEXTURE_2D, null);
-    texture = default_texture;
-    if (num_textures > 3)
-      texture = this.previewTextures[3];
-    this.quadRenderPass.addUniform("tex3",
-      (gl: WebGLRenderingContext, loc: WebGLUniformLocation) => {
-        gl.activeTexture(gl.TEXTURE3);
-        gl.bindTexture(gl.TEXTURE_2D, texture);
-        gl.uniform1i(loc, 3);
-    });
-    gl.bindTexture(gl.TEXTURE_2D, null);
+    this.loadTextures();
 
     this.quadRenderPass.setDrawData(this.ctx.TRIANGLES, 24, this.ctx.UNSIGNED_INT, 0);
     this.quadRenderPass.setup();
 
   }
 
+  public loadTextures(): void {
+    // set uniforms for drawing the preview
+    let num_textures: number = this.previewTextures.length;
+    // let default_texture: WebGLTexture = this.createDefaultTexture();
+    // console.log("num_textures: ", num_textures);
+    let texture: WebGLTexture = this.createDefaultTexture(); 
+
+    if (num_textures > 0) {
+      this.quadRenderPass.addUniform("tex0",
+        (gl: WebGLRenderingContext, loc: WebGLUniformLocation) => {
+          gl.activeTexture(gl.TEXTURE0);
+          gl.bindTexture(gl.TEXTURE_2D, this.previewTextures[0]);
+          gl.uniform1i(loc, 0);
+      }); 
+    } else {
+      this.quadRenderPass.addUniform("tex0",
+        (gl: WebGLRenderingContext, loc: WebGLUniformLocation) => {
+          gl.activeTexture(gl.TEXTURE0);
+          gl.bindTexture(gl.TEXTURE_2D, texture);
+          gl.uniform1i(loc, 0);
+      }); 
+    }
+
+
+    if (num_textures > 1) {
+      this.quadRenderPass.addUniform("tex1",
+        (gl: WebGLRenderingContext, loc: WebGLUniformLocation) => {
+          gl.activeTexture(gl.TEXTURE1);
+          gl.bindTexture(gl.TEXTURE_2D, this.previewTextures[1]);
+          gl.uniform1i(loc, 1);
+      });
+    } else {
+      this.quadRenderPass.addUniform("tex1",
+        (gl: WebGLRenderingContext, loc: WebGLUniformLocation) => {
+          gl.activeTexture(gl.TEXTURE1);
+          gl.bindTexture(gl.TEXTURE_2D, texture);
+          gl.uniform1i(loc, 1);
+      });
+    }
+    
+    if (num_textures > 2) {
+      this.quadRenderPass.addUniform("tex2",
+        (gl: WebGLRenderingContext, loc: WebGLUniformLocation) => {
+          gl.activeTexture(gl.TEXTURE2);
+          gl.bindTexture(gl.TEXTURE_2D, this.previewTextures[2]);
+          gl.uniform1i(loc, 2);
+      });
+    } else {
+      this.quadRenderPass.addUniform("tex2",
+        (gl: WebGLRenderingContext, loc: WebGLUniformLocation) => {
+          gl.activeTexture(gl.TEXTURE2);
+          gl.bindTexture(gl.TEXTURE_2D, texture);
+          gl.uniform1i(loc, 2);
+      });
+    }
+    
+    if (num_textures > 3) {
+      this.quadRenderPass.addUniform("tex3",
+        (gl: WebGLRenderingContext, loc: WebGLUniformLocation) => {
+          gl.activeTexture(gl.TEXTURE3);
+          gl.bindTexture(gl.TEXTURE_2D, this.previewTextures[3]);
+          gl.uniform1i(loc, 3);
+      });
+    } else {
+      this.quadRenderPass.addUniform("tex3",
+        (gl: WebGLRenderingContext, loc: WebGLUniformLocation) => {
+          gl.activeTexture(gl.TEXTURE3);
+          gl.bindTexture(gl.TEXTURE_2D, texture);
+          gl.uniform1i(loc, 3);
+      });
+    }
+  }
+
   public createDefaultTexture(): WebGLTexture {
     const gl: WebGLRenderingContext = this.ctx;
     let texture = gl.createTexture()!;
     gl.bindTexture(gl.TEXTURE_2D, texture);
+
+    // Creates an 800x600 background-colored texture
+    let bg: Vec4 = new Vec4([0, 95, 95, 255]);
+    const width = 800, height = 600;
+    const data = new Uint8Array(width * height * 4);
     
-    // Set a 1x1 transparent pixel
+    for (let i = 0; i < data.length; i += 4) {
+        data[i] = bg.r;     // Red
+        data[i + 1] = bg.g; // Green
+        data[i + 2] = bg.b; // Blue
+        data[i + 3] = bg.a; // Alpha
+    }
+
+    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
     gl.texImage2D(
-      gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, 
-      gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([255, 0, 0, 1])
+        gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, 
+        gl.RGBA, gl.UNSIGNED_BYTE, data
     );
   
-    gl.bindTexture(gl.TEXTURE_2D, null);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
     return texture;
   }
 }
