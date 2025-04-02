@@ -543,7 +543,6 @@ export class GUI {
                         curr.startTime -= 1;
                         curr.index = i;
                     }
-                    // if(this.selectedKeyframe >= keyframes.length)
                     this.selectedKeyframe = -1;
                     this.animation.updateTextures();
                 }
