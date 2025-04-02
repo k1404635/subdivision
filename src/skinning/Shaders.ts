@@ -196,6 +196,8 @@ export const previewVSText = `
 
     attribute vec2 vertPosition;
 
+    uniform float selectedKF;
+
     varying vec2 uv;
 
     void main() {
@@ -209,12 +211,36 @@ export const previewVSText = `
 export const previewFSText = `
     precision mediump float;
 
+    uniform float selectedKF;
+
     varying vec2 uv;
 
     void main () {
+        // gl_FragColor = vec4(0.0, 0.37254903, 0.37254903, 1.0);
         gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
-    }
 
+        // int kf = int(selectedKF);
+        // if(true) {
+        //     // gl_FragColor = vec4(0.0, 0.37254903, 0.37254903, 1.0);
+        //     gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+        // }
+        
+
+        // if(kf == 0) {
+        // if((abs(uv.y-0.03) < .013)) { //last one
+        //     gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+        // }
+        // if(uv.x > 0.0) {
+        //     gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+        // }
+        // } else if(kf == 1) {
+        //     //
+        // } else if(kf == 2) {
+        //     //
+        // } else if(kf == 3) {
+        //     //
+        // }
+    }
 `;
 
 export const quadVSText = `
@@ -248,15 +274,9 @@ export const quadFSText = `
     uniform sampler2D tex3;
     uniform sampler2D tex4;
 
-    uniform float selectedKF;
     uniform float numKeyFrames;
 
     void main () {
-        int kf = int(selectedKF);
-        if(kf == -1) {
-            gl_FragColor = vec4(0.0, 0.37254903, 0.37254903, 1.0);
-        }
-        
         int numKFs = int(numKeyFrames);
 
         if((abs(uv.y-0.14) < .1) && (abs(uv.x-.5) < 0.667)) { //last one
@@ -280,20 +300,5 @@ export const quadFSText = `
             else
                 gl_FragColor = texture2D(tex4, tc); 
         }
-        
-        // if(kf == 0) {
-        // if((abs(uv.y-0.03) < .013)) { //last one
-        //     gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
-        // }
-        // if(uv.x > 0.0) {
-        //     gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
-        // }
-        // } else if(kf == 1) {
-        //     //
-        // } else if(kf == 2) {
-        //     //
-        // } else if(kf == 3) {
-        //     //
-        // }
     }
 `;
