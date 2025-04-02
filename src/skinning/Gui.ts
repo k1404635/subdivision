@@ -572,6 +572,14 @@ export class GUI implements IGUI {
         );
         break;
       }
+      case "KeyG": {
+        let bones: Bone[] = this.animation.getScene().meshes[0].bones;
+        for (let i: number = 0; i < bones.length; i++) {
+          let curr: Bone = bones[i];
+          curr.setRMatrix((new Mat4()).setIdentity(), bones, false, false);
+        }
+        break;
+      }
       case "ArrowLeft": {
         //TODO: Handle bone rolls when a bone is selected
         if(this.selectedBone == -1) {

@@ -427,6 +427,14 @@ export class GUI {
                 this.camera = new Camera(new Vec3([0, 0, 6]), new Vec3([0, 0, 0]), new Vec3([0, 1, 0]), 45, this.viewPortWidth / this.viewPortHeight, 0.1, 1000.0);
                 break;
             }
+            case "KeyG": {
+                let bones = this.animation.getScene().meshes[0].bones;
+                for (let i = 0; i < bones.length; i++) {
+                    let curr = bones[i];
+                    curr.setRMatrix((new Mat4()).setIdentity(), bones, false, false);
+                }
+                break;
+            }
             case "ArrowLeft": {
                 //TODO: Handle bone rolls when a bone is selected
                 if (this.selectedBone == -1) {
