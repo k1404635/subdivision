@@ -22,9 +22,10 @@ export class GUI {
         this.selectedKeyframe = -1;
         this.hoverX = 0;
         this.hoverY = 0;
+        this.dragStartKF = -1;
         this.height = canvas.height;
         this.viewPortHeight = this.height - 200;
-        this.width = canvas.width + 320;
+        this.width = canvas.width;
         this.viewPortWidth = this.width - 320;
         this.prevX = 0;
         this.prevY = 0;
@@ -49,6 +50,9 @@ export class GUI {
     }
     getSelectedBone() {
         return this.selectedBone;
+    }
+    getSelectedKF() {
+        return this.selectedKeyframe;
     }
     /**
      * Resets the state of the GUI
@@ -79,12 +83,27 @@ export class GUI {
     projMatrix() {
         return this.camera.projMatrix();
     }
+    whichKF(x, y) {
+        if (y >= 24 && y <= 200 && x >= 800 && x <= 1120)
+            return 0;
+        else if (y >= 216 && y <= 392 && x >= 800 && x <= 1120)
+            return 1;
+        else if (408 <= y && y <= 584 && x >= 800 && x <= 1120)
+            return 2;
+        else if (600 <= y && y <= 776 && x >= 800 && x <= 1120)
+            return 3;
+        return -1;
+    }
     /**
      * Callback function for the start of a drag event.
      * @param mouse
      */
     dragStart(mouse) {
-        if (mouse.offsetY > 600) {
+        if (mouse.offsetX > 800 && mouse.offsetX < 1120 && mouse.offsetY < 800) {
+            this.dragStartKF = this.whichKF(mouse.offsetX, mouse.offsetY);
+            return;
+        }
+        else if (mouse.offsetY > 600) {
             // outside the main panel
             return;
         }
@@ -301,6 +320,15 @@ export class GUI {
         this.prevY = 0;
         this.our_prevX = 0;
         this.our_prevY = 0;
+        if (mouse.offsetX > 800 && mouse.offsetX < 1120 && mouse.offsetY < 800) {
+            if (this.whichKF(mouse.offsetX, mouse.offsetY) == this.dragStartKF)
+                this.selectedKeyframe = this.dragStartKF;
+            else
+                this.dragStartKF = -1;
+        }
+        else {
+            this.dragStartKF = -1;
+        }
         // TODO: Handle ending highlight/dragging logic as needed
         this.selectedBone = -1;
     }
@@ -314,48 +342,56 @@ export class GUI {
                 this.animation.previewTextures = [];
                 this.animation.setScene("./static/assets/skinning/split_cube.dae");
                 this.animation.initGui();
+                this.selectedKeyframe = -1;
                 break;
             }
             case "Digit2": {
                 this.animation.previewTextures = [];
                 this.animation.setScene("./static/assets/skinning/long_cubes.dae");
                 this.animation.initGui();
+                this.selectedKeyframe = -1;
                 break;
             }
             case "Digit3": {
                 this.animation.previewTextures = [];
                 this.animation.setScene("./static/assets/skinning/simple_art.dae");
                 this.animation.initGui();
+                this.selectedKeyframe = -1;
                 break;
             }
             case "Digit4": {
                 this.animation.previewTextures = [];
                 this.animation.setScene("./static/assets/skinning/mapped_cube.dae");
                 this.animation.initGui();
+                this.selectedKeyframe = -1;
                 break;
             }
             case "Digit5": {
                 this.animation.previewTextures = [];
                 this.animation.setScene("./static/assets/skinning/robot.dae");
                 this.animation.initGui();
+                this.selectedKeyframe = -1;
                 break;
             }
             case "Digit6": {
                 this.animation.previewTextures = [];
                 this.animation.setScene("./static/assets/skinning/head.dae");
                 this.animation.initGui();
+                this.selectedKeyframe = -1;
                 break;
             }
             case "Digit7": {
                 this.animation.previewTextures = [];
                 this.animation.setScene("./static/assets/skinning/wolf.dae");
                 this.animation.initGui();
+                this.selectedKeyframe = -1;
                 break;
             }
             case "Digit8": {
                 this.animation.previewTextures = [];
                 this.animation.setScene("./static/assets/skinning/satellite.dae");
                 this.animation.initGui();
+                this.selectedKeyframe = -1;
                 break;
             }
             case "KeyW": {
@@ -376,6 +412,7 @@ export class GUI {
             }
             case "KeyR": {
                 this.animation.reset();
+                this.selectedKeyframe = -1;
                 break;
             }
             case "ArrowLeft": {
@@ -452,7 +489,7 @@ export class GUI {
                         newKeyframe = new Keyframe(this.getMaxTime(), keyframes_len, 1);
                     newKeyframe.setOrientations(this.animation.getScene().meshes[0].bones);
                     this.animation.getScene().meshes[0].keyframes.push(newKeyframe);
-                    this.animation.renderToTexture();
+                    this.animation.renderToTexture(-1);
                 }
                 break;
             }
@@ -468,23 +505,25 @@ export class GUI {
                 break;
             }
             case "Equal": {
-                if (this.selectedKeyframe != -1) {
-                    let keyframes = this.animation.getScene().meshes[0].keyframes;
+                let keyframes = this.animation.getScene().meshes[0].keyframes;
+                if (this.selectedKeyframe != -1 && keyframes.length > this.selectedKeyframe) {
                     this.animation.getScene().meshes[0].updateOrientations(keyframes[this.selectedKeyframe].getOrientations());
                 }
                 break;
             }
             case "Delete": {
-                if (this.selectedKeyframe != -1) {
+                if (this.selectedKeyframe != -1 && this.animation.getScene().meshes[0].keyframes.length > this.selectedKeyframe) {
                     this.animation.previewTextures.splice(this.selectedKeyframe, 1);
-                    this.animation.loadTextures();
+                    this.animation.initGui();
                 }
                 break;
             }
             case "KeyU": {
-                if (this.selectedKeyframe != -1) {
+                if (this.selectedKeyframe != -1 && this.animation.getScene().meshes[0].keyframes.length > this.selectedKeyframe) {
                     let bones = this.animation.getScene().meshes[0].bones;
                     this.animation.getScene().meshes[0].keyframes[this.selectedKeyframe].setOrientations(bones);
+                    this.animation.renderToTexture(this.selectedKeyframe);
+                    this.animation.initGui();
                 }
                 break;
             }

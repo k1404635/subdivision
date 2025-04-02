@@ -126,6 +126,7 @@ export class Keyframe {
         this.orientations = [];
     }
     setOrientations(bones) {
+        this.orientations = [];
         for (let i = 0; i < bones.length; i++) {
             let curr = bones[i];
             this.orientations.push(curr.getRMatrix());

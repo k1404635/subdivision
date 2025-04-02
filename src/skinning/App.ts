@@ -49,9 +49,6 @@ export class SkinningAnimation extends CanvasAnimation {
   /* Scrub bar background rendering info */
   private sBackRenderPass: RenderPass;
 
-  /* Preview rendering info */
-  private previewRenderPass: RenderPass;
-
   /* For rendering textured quads */
   private quadRenderPass: RenderPass;
 
@@ -69,6 +66,7 @@ export class SkinningAnimation extends CanvasAnimation {
     super(canvas);
 
     this.canvas2d = document.getElementById("textCanvas") as HTMLCanvasElement;
+    this.canvas2d.width += 320;
     this.ctx2 = this.canvas2d.getContext("2d");
     if (this.ctx2) {
       this.ctx2.font = "25px serif";
@@ -94,10 +92,7 @@ export class SkinningAnimation extends CanvasAnimation {
 
     // Status bar
     this.sBackRenderPass = new RenderPass(this.extVAO, gl, sBackVSText, sBackFSText);
-
-    // Preview section
-    this.previewRenderPass = new RenderPass(this.extVAO, gl, previewVSText, previewFSText);
-
+    
     // Textured Quads
     this.quadRenderPass = new RenderPass(this.extVAO, gl, quadVSText, quadFSText);
 
@@ -131,14 +126,6 @@ export class SkinningAnimation extends CanvasAnimation {
 
     this.sBackRenderPass.setDrawData(this.ctx.TRIANGLES, 6, this.ctx.UNSIGNED_INT, 0);
     this.sBackRenderPass.setup();
-
-    // Preview background 
-    this.previewRenderPass.setIndexBufferData(new Uint32Array([1, 0, 2, 2, 0, 3]))
-    this.previewRenderPass.addAttribute("vertPosition", 2, this.ctx.FLOAT, false,
-      2 * Float32Array.BYTES_PER_ELEMENT, 0, undefined, verts);
-
-    this.previewRenderPass.setDrawData(this.ctx.TRIANGLES, 6, this.ctx.UNSIGNED_INT, 0);
-    this.previewRenderPass.setup();
 
     // Textured Quads
     let quad_verts = new Float32Array([
@@ -447,12 +434,6 @@ export class SkinningAnimation extends CanvasAnimation {
       this.sBackRenderPass.draw();      
     }    
 
-    /* Draw preview section */
-    // if (this.scene.meshes.length > 0) {
-    //   gl.viewport(800, 0, 320, 800);
-    //   this.previewRenderPass.draw();      
-    // }    
-
     /* Draw quads in preview section */
     if (this.scene.meshes.length > 0) {
       gl.viewport(800, 0, 320, 800);
@@ -490,7 +471,7 @@ export class SkinningAnimation extends CanvasAnimation {
     this.scene.load(() => this.initScene());
   }
 
-  public renderToTexture(): void {
+  public renderToTexture(index: number): void {
     // Drawing
     const gl: WebGLRenderingContext = this.ctx;
     const bg: Vec4 = this.backgroundColor;
@@ -541,7 +522,10 @@ export class SkinningAnimation extends CanvasAnimation {
     // Reset framebuffer binding to default (the screen)
     gl.bindTexture(gl.TEXTURE_2D, null);
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-    this.previewTextures.push(targetTexture);
+    if (index == -1)
+      this.previewTextures.push(targetTexture);
+    else
+      this.previewTextures[index] = targetTexture;
 
     this.loadTextures();
 
@@ -621,6 +605,10 @@ export class SkinningAnimation extends CanvasAnimation {
           gl.uniform1i(loc, 3);
       });
     }
+    this.quadRenderPass.addUniform("selectedKF",
+      (gl: WebGLRenderingContext, loc: WebGLUniformLocation) => {
+        gl.uniform1f(loc, this.gui.getSelectedKF());
+    });
   }
 
   public createDefaultTexture(): WebGLTexture {
