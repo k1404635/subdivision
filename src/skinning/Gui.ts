@@ -512,6 +512,18 @@ export class GUI implements IGUI {
         this.selectedKeyframe = -1;
         break;
       }
+      case "KeyC": {
+        this.camera = new Camera(
+          new Vec3([0, 0, -6]),
+          new Vec3([0, 0, 0]),
+          new Vec3([0, 1, 0]),
+          45,
+          this.viewPortWidth / this.viewPortHeight,
+          0.1,
+          1000.0
+        );
+        break;
+      }
       case "ArrowLeft": {
         //TODO: Handle bone rolls when a bone is selected
         if(this.selectedBone == -1) {

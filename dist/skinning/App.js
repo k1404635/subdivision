@@ -268,8 +268,8 @@ export class SkinningAnimation extends CanvasAnimation {
                         let prev_keyframe = keyframes[curr_keyframe.index - 1];
                         let prev_quat = prev_keyframe.getOrientations()[i].copy().toMat3().toQuat();
                         let curr_quat = curr_keyframe.getOrientations()[i].copy().toMat3().toQuat();
-                        // Quat.slerpShort(prev_quat, curr_quat, gui_time - curr_keyframe.startTime, curr_orientation);
-                        Quat.slerp(prev_quat, curr_quat, gui_time - curr_keyframe.startTime, curr_orientation);
+                        Quat.slerpShort(prev_quat, curr_quat, gui_time - curr_keyframe.startTime, curr_orientation);
+                        // Quat.slerp(prev_quat, curr_quat, gui_time - curr_keyframe.startTime, curr_orientation);
                         curr.setRMatrix(curr_orientation.toMat4(), bones, false, false);
                     }
                 }
