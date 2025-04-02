@@ -407,8 +407,24 @@ export class GUI {
                 this.selectedKeyframe = -1;
                 break;
             }
-            case "KeyC": {
+            case "KeyZ": { //left
+                this.camera = new Camera(new Vec3([6, 0, 0]), new Vec3([0, 0, 0]), new Vec3([0, 1, 0]), 45, this.viewPortWidth / this.viewPortHeight, 0.1, 1000.0);
+                break;
+            }
+            case "KeyX": { //right
+                this.camera = new Camera(new Vec3([-6, 0, 0]), new Vec3([0, 0, 0]), new Vec3([0, 1, 0]), 45, this.viewPortWidth / this.viewPortHeight, 0.1, 1000.0);
+                break;
+            }
+            case "KeyC": { //front
                 this.camera = new Camera(new Vec3([0, 0, -6]), new Vec3([0, 0, 0]), new Vec3([0, 1, 0]), 45, this.viewPortWidth / this.viewPortHeight, 0.1, 1000.0);
+                break;
+            }
+            case "KeyB": {
+                this.camera = new Camera(new Vec3([0, 6, 0]), new Vec3([0, 0, 0]), new Vec3([0, 0, 1]), 45, this.viewPortWidth / this.viewPortHeight, 0.1, 1000.0);
+                break;
+            }
+            case "KeyV": { //back
+                this.camera = new Camera(new Vec3([0, 0, 6]), new Vec3([0, 0, 0]), new Vec3([0, 1, 0]), 45, this.viewPortWidth / this.viewPortHeight, 0.1, 1000.0);
                 break;
             }
             case "ArrowLeft": {
