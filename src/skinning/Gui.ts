@@ -5,7 +5,7 @@ import { Mat4, Vec3, Vec4, Vec2, Mat2, Quat } from "../lib/TSM.js";
 import { Bone } from "./Scene.js";
 import { Keyframe } from "./Scene.js";
 import { RenderPass } from "../lib/webglutils/RenderPass.js";
-import { Scene } from "../lib/threejs/src/Three.js";
+import { RGBA_ASTC_10x10_Format, Scene } from "../lib/threejs/src/Three.js";
 
 /**
  * Might be useful for designing any animation GUI
@@ -422,8 +422,10 @@ export class GUI implements IGUI {
     this.our_prevY = 0;
 
     if (mouse.offsetX > 800 && mouse.offsetX < 1120 && mouse.offsetY < 800) {
-      if(this.whichKF(mouse.offsetX, mouse.offsetY) == this.dragStartKF) 
-        this.selectedKeyframe = this.dragStartKF;
+      if(this.whichKF(mouse.offsetX, mouse.offsetY) == this.dragStartKF) {
+        if(this.dragStartKF < this.animation.getScene().meshes[0].keyframes.length)
+          this.selectedKeyframe = this.dragStartKF;
+      }
       else
         this.dragStartKF = -1;
     } else {
@@ -690,6 +692,7 @@ export class GUI implements IGUI {
             curr.startTime -= 1;
             curr.index = i;
           }
+          this.selectedKeyframe = -1;
           this.animation.updateTextures();
         }
         break;

@@ -220,9 +220,8 @@ export class SkinningAnimation extends CanvasAnimation {
     this.previewRenderPass = new RenderPass(this.extVAO, gl, previewVSText, previewFSText);
     this.previewRenderPass.addUniform("selectedKF",
       (gl: WebGLRenderingContext, loc: WebGLUniformLocation) => {
-        gl.uniform1f(loc, 1.0);
+        gl.uniform1f(loc, this.gui.getSelectedKF());
     });
-    
     
     let verts = new Float32Array([-1, -1, -1, 1, 1, 1, 1, -1]);
     this.previewRenderPass.setIndexBufferData(new Uint32Array([1, 0, 2, 2, 0, 3]))
@@ -467,13 +466,8 @@ export class SkinningAnimation extends CanvasAnimation {
       gl.viewport(800, 0, 320, 800);
       this.previewRenderPass.draw();
       gl.disable(gl.DEPTH_TEST);
-      // gl.depthMask(false);  // Disable depth writes
-      // gl.enable(gl.BLEND);  // Enable blending if necessary (this can be important for transparency)
-      this.quadRenderPass.draw();  // Draw the quad pass (on top of the preview pass)
+      this.quadRenderPass.draw();
       gl.enable(gl.DEPTH_TEST);
-      // Reset depth mask and blending after the quad pass
-      // gl.depthMask(true);  // Re-enable depth writes
-      // gl.disable(gl.BLEND);    
     }    
   }
 
@@ -625,23 +619,11 @@ export class SkinningAnimation extends CanvasAnimation {
         gl.uniform1i(loc, 4);
     });
 
-    // this.previewRenderPass.addUniform("selectedKF",
-    //   (gl: WebGLRenderingContext, loc: WebGLUniformLocation) => {
-    //     gl.uniform1f(loc, 1.0);
-    // });
-
     this.quadRenderPass.addUniform("numKeyFrames",
       (gl: WebGLRenderingContext, loc: WebGLUniformLocation) => {
         gl.uniform1f(loc, this.gui.getNumKeyFrames());
     });
   }
-
-  // public updateSelectedKF(): void {
-  //   this.quadRenderPass.addUniform("selectedKF",
-  //     (gl: WebGLRenderingContext, loc: WebGLUniformLocation) => {
-  //       gl.uniform1f(loc, this.gui.getSelectedKF());
-  //   });
-  // }
 
   public createDefaultTexture(): WebGLTexture {
     const gl: WebGLRenderingContext = this.ctx;

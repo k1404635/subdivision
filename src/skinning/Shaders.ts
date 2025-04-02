@@ -216,30 +216,67 @@ export const previewFSText = `
     varying vec2 uv;
 
     void main () {
-        // gl_FragColor = vec4(0.0, 0.37254903, 0.37254903, 1.0);
-        gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+        gl_FragColor = vec4(0.0, 0.37254903, 0.37254903, 1.0);
 
-        // int kf = int(selectedKF);
-        // if(true) {
-        //     // gl_FragColor = vec4(0.0, 0.37254903, 0.37254903, 1.0);
-        //     gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
-        // }
+        int kf = int(selectedKF);
+        if(kf == -1) {
+            gl_FragColor = vec4(0.0, 0.37254903, 0.37254903, 1.0);
+        } 
         
-
-        // if(kf == 0) {
-        // if((abs(uv.y-0.03) < .013)) { //last one
-        //     gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
-        // }
-        // if(uv.x > 0.0) {
-        //     gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
-        // }
-        // } else if(kf == 1) {
-        //     //
-        // } else if(kf == 2) {
-        //     //
-        // } else if(kf == 3) {
-        //     //
-        // }
+        if(kf == 3) {
+            if((abs(uv.y-0.03) < .0025) && abs(uv.x) > 0.05 && abs(uv.x) < 0.95) { //bottom line
+                gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+            }
+            if((abs(uv.y-0.25) < .0025) && abs(uv.x) > 0.05 && abs(uv.x) < 0.95) { //top line
+                gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+            }
+            if(abs(uv.x) > 0.05 && abs(uv.x) < 0.064 && abs(uv.y) > 0.03 && abs(uv.y) < 0.25) { //left line
+                gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+            }
+           if(abs(uv.x) > 0.936 && abs(uv.x) < 0.95 && abs(uv.y) > 0.03 && abs(uv.y) < 0.25) { //left line
+                gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+            }
+            // abs(uv.y) > 0.275 && abs(uv.y) < 0.725
+        } else if(kf == 2) {
+            if((abs(uv.y-0.27) < .0025) && abs(uv.x) > 0.05 && abs(uv.x) < 0.95) { //bottom line
+                gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+            }
+            if((abs(uv.y-0.49) < .0025) && abs(uv.x) > 0.05 && abs(uv.x) < 0.95) { //top line
+                gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+            }
+            if(abs(uv.x) > 0.05 && abs(uv.x) < 0.064 && abs(uv.y) > 0.27 && abs(uv.y) < 0.49) { //left line
+                gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+            }
+           if(abs(uv.x) > 0.936 && abs(uv.x) < 0.95 && abs(uv.y) > 0.27 && abs(uv.y) < 0.49) { //left line
+                gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+            }
+        } else if(kf == 1) {
+            if((abs(uv.y-0.51) < .0025) && abs(uv.x) > 0.05 && abs(uv.x) < 0.95) { //bottom line
+                gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+            }
+            if((abs(uv.y-0.73) < .0025) && abs(uv.x) > 0.05 && abs(uv.x) < 0.95) { //top line
+                gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+            }
+            if(abs(uv.x) > 0.05 && abs(uv.x) < 0.064 && abs(uv.y) > 0.51 && abs(uv.y) < 0.73) { //left line
+                gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+            }
+           if(abs(uv.x) > 0.936 && abs(uv.x) < 0.95 && abs(uv.y) > 0.51 && abs(uv.y) < 0.73) { //left line
+                gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+            }
+        } else if(kf == 0) {
+            if((abs(uv.y-0.75) < .0025) && abs(uv.x) > 0.05 && abs(uv.x) < 0.95) { //bottom line
+                gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+            }
+            if((abs(uv.y-0.97) < .0025) && abs(uv.x) > 0.05 && abs(uv.x) < 0.95) { //top line
+                gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+            }
+            if(abs(uv.x) > 0.05 && abs(uv.x) < 0.064 && abs(uv.y) > 0.75 && abs(uv.y) < 0.97) { //left line
+                gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+            }
+           if(abs(uv.x) > 0.936 && abs(uv.x) < 0.95 && abs(uv.y) > 0.75 && abs(uv.y) < 0.97) { //left line
+                gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+            }
+        }
     }
 `;
 

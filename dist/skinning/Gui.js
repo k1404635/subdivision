@@ -321,8 +321,10 @@ export class GUI {
         this.our_prevX = 0;
         this.our_prevY = 0;
         if (mouse.offsetX > 800 && mouse.offsetX < 1120 && mouse.offsetY < 800) {
-            if (this.whichKF(mouse.offsetX, mouse.offsetY) == this.dragStartKF)
-                this.selectedKeyframe = this.dragStartKF;
+            if (this.whichKF(mouse.offsetX, mouse.offsetY) == this.dragStartKF) {
+                if (this.dragStartKF < this.animation.getScene().meshes[0].keyframes.length)
+                    this.selectedKeyframe = this.dragStartKF;
+            }
             else
                 this.dragStartKF = -1;
         }
@@ -541,6 +543,8 @@ export class GUI {
                         curr.startTime -= 1;
                         curr.index = i;
                     }
+                    // if(this.selectedKeyframe >= keyframes.length)
+                    this.selectedKeyframe = -1;
                     this.animation.updateTextures();
                 }
                 break;
