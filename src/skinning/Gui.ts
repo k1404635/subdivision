@@ -442,56 +442,48 @@ export class GUI implements IGUI {
       case "Digit1": {
         this.animation.previewTextures = [];
         this.animation.setScene("./static/assets/skinning/split_cube.dae");
-        this.animation.initGui();
         this.selectedKeyframe = -1;
         break;
       }
       case "Digit2": {
         this.animation.previewTextures = [];
         this.animation.setScene("./static/assets/skinning/long_cubes.dae");
-        this.animation.initGui();
         this.selectedKeyframe = -1;
         break;
       }
       case "Digit3": {
         this.animation.previewTextures = [];
         this.animation.setScene("./static/assets/skinning/simple_art.dae");
-        this.animation.initGui();
         this.selectedKeyframe = -1;
         break;
       }      
       case "Digit4": {
         this.animation.previewTextures = [];
         this.animation.setScene("./static/assets/skinning/mapped_cube.dae");
-        this.animation.initGui();
         this.selectedKeyframe = -1;
         break;
       }
       case "Digit5": {
         this.animation.previewTextures = [];
         this.animation.setScene("./static/assets/skinning/robot.dae");
-        this.animation.initGui();
         this.selectedKeyframe = -1;
         break;
       }
       case "Digit6": {
         this.animation.previewTextures = [];
         this.animation.setScene("./static/assets/skinning/head.dae");
-        this.animation.initGui();
         this.selectedKeyframe = -1;
         break;
       }
       case "Digit7": {
         this.animation.previewTextures = [];
         this.animation.setScene("./static/assets/skinning/wolf.dae");
-        this.animation.initGui();
         this.selectedKeyframe = -1;
         break;
       }
       case "Digit8": {
         this.animation.previewTextures = [];
         this.animation.setScene("./static/assets/skinning/satellite.dae");
-        this.animation.initGui();
         this.selectedKeyframe = -1;
         break;
       }
@@ -623,7 +615,14 @@ export class GUI implements IGUI {
       case "Delete": { 
         if(this.selectedKeyframe != -1 && this.animation.getScene().meshes[0].keyframes.length > this.selectedKeyframe) {
           this.animation.previewTextures.splice(this.selectedKeyframe, 1);
-          this.animation.initGui();
+          this.animation.getScene().meshes[0].keyframes.splice(this.selectedKeyframe, 1);
+          let keyframes: Keyframe[] = this.animation.getScene().meshes[0].keyframes;
+          for (let i: number = this.selectedKeyframe; i < keyframes.length; i++) {
+            let curr: Keyframe = keyframes[i];
+            curr.startTime -= 1;
+            curr.index = i;
+          }
+          this.animation.updateTextures();
         }
         break;
       }
@@ -632,7 +631,6 @@ export class GUI implements IGUI {
           let bones: Bone[] = this.animation.getScene().meshes[0].bones;
           this.animation.getScene().meshes[0].keyframes[this.selectedKeyframe].setOrientations(bones);
           this.animation.renderToTexture(this.selectedKeyframe);
-          this.animation.initGui();
         }
         break;
       }

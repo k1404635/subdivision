@@ -113,7 +113,6 @@ export class SkinningAnimation extends CanvasAnimation {
       this.gui.reset();
       this.setScene(this.loadedScene);
       this.previewTextures = [];
-      this.initGui();
   }
 
   public initGui(): void {
@@ -148,6 +147,11 @@ export class SkinningAnimation extends CanvasAnimation {
       -0.667, -0.92, 
       0.667, -0.52, 
       0.667, -0.92, 
+      
+      -1, -1, 
+      -1, 1, 
+      1, 1, 
+      1, -1
     ]);
    
     let quad_indices = new Uint32Array([
@@ -161,7 +165,10 @@ export class SkinningAnimation extends CanvasAnimation {
       10, 9, 11, 
 
       12, 13, 14, 
-      14, 13, 15
+      14, 13, 15, 
+      
+      17, 16, 18, 
+      18, 16, 19
     ]);
 
     let texcoords = new Float32Array([
@@ -183,7 +190,9 @@ export class SkinningAnimation extends CanvasAnimation {
       0, 1, 
       0, 0, 
       1, 1, 
-      1, 0
+      1, 0,
+
+      0, 1, 0, 0, 1, 1, 1, 0
     ]); 
     
     let gl = this.ctx;
@@ -195,7 +204,8 @@ export class SkinningAnimation extends CanvasAnimation {
    
     this.loadTextures();
 
-    this.quadRenderPass.setDrawData(this.ctx.TRIANGLES, 24, this.ctx.UNSIGNED_INT, 0);
+    this.quadRenderPass.setDrawData(this.ctx.TRIANGLES, 30, this.ctx.UNSIGNED_INT, 0);
+    // this.quadRenderPass.setDrawData(this.ctx.TRIANGLES, 24, this.ctx.UNSIGNED_INT, 0);
     this.quadRenderPass.setup();
     }
 
@@ -402,6 +412,7 @@ export class SkinningAnimation extends CanvasAnimation {
             let prev_quat: Quat = prev_keyframe.getOrientations()[i].copy().toMat3().toQuat();
             let curr_quat: Quat = curr_keyframe.getOrientations()[i].copy().toMat3().toQuat();
             Quat.slerpShort(prev_quat, curr_quat, gui_time - curr_keyframe.startTime, curr_orientation);
+            // Quat.slerp(prev_quat, curr_quat, gui_time - curr_keyframe.startTime, curr_orientation);
             curr.setRMatrix(curr_orientation.toMat4(), bones, false, false);
           }
         }
@@ -534,80 +545,69 @@ export class SkinningAnimation extends CanvasAnimation {
 
   }
 
+  public updateTextures(): void {
+    let gl = this.ctx;
+    
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this.previewTextures[0]);
+
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, this.previewTextures[1]);
+
+    gl.activeTexture(gl.TEXTURE2);
+    gl.bindTexture(gl.TEXTURE_2D, this.previewTextures[2]);
+    
+    gl.activeTexture(gl.TEXTURE3);
+    gl.bindTexture(gl.TEXTURE_2D, this.previewTextures[3]);
+  }
+
   public loadTextures(): void {
     // set uniforms for drawing the preview
-    let num_textures: number = this.previewTextures.length;
-    // let default_texture: WebGLTexture = this.createDefaultTexture();
-    // console.log("num_textures: ", num_textures);
-    let texture: WebGLTexture = this.createDefaultTexture(); 
+    let gl = this.ctx;
 
-    if (num_textures > 0) {
-      this.quadRenderPass.addUniform("tex0",
-        (gl: WebGLRenderingContext, loc: WebGLUniformLocation) => {
-          gl.activeTexture(gl.TEXTURE0);
-          gl.bindTexture(gl.TEXTURE_2D, this.previewTextures[0]);
-          gl.uniform1i(loc, 0);
-      }); 
-    } else {
-      this.quadRenderPass.addUniform("tex0",
-        (gl: WebGLRenderingContext, loc: WebGLUniformLocation) => {
-          gl.activeTexture(gl.TEXTURE0);
-          gl.bindTexture(gl.TEXTURE_2D, texture);
-          gl.uniform1i(loc, 0);
-      }); 
-    }
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this.previewTextures[0]);
+    this.quadRenderPass.addUniform("tex0",
+      (gl: WebGLRenderingContext, loc: WebGLUniformLocation) => {
+        gl.uniform1i(loc, 0);
+    }); 
 
-
-    if (num_textures > 1) {
-      this.quadRenderPass.addUniform("tex1",
-        (gl: WebGLRenderingContext, loc: WebGLUniformLocation) => {
-          gl.activeTexture(gl.TEXTURE1);
-          gl.bindTexture(gl.TEXTURE_2D, this.previewTextures[1]);
-          gl.uniform1i(loc, 1);
-      });
-    } else {
-      this.quadRenderPass.addUniform("tex1",
-        (gl: WebGLRenderingContext, loc: WebGLUniformLocation) => {
-          gl.activeTexture(gl.TEXTURE1);
-          gl.bindTexture(gl.TEXTURE_2D, texture);
-          gl.uniform1i(loc, 1);
-      });
-    }
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, this.previewTextures[1]);
+    this.quadRenderPass.addUniform("tex1",
+      (gl: WebGLRenderingContext, loc: WebGLUniformLocation) => {
+        gl.uniform1i(loc, 1);
+    });
+ 
+    gl.activeTexture(gl.TEXTURE2);
+    gl.bindTexture(gl.TEXTURE_2D, this.previewTextures[2]);
+    this.quadRenderPass.addUniform("tex2",
+      (gl: WebGLRenderingContext, loc: WebGLUniformLocation) => {
+        gl.uniform1i(loc, 2);
+    });
     
-    if (num_textures > 2) {
-      this.quadRenderPass.addUniform("tex2",
-        (gl: WebGLRenderingContext, loc: WebGLUniformLocation) => {
-          gl.activeTexture(gl.TEXTURE2);
-          gl.bindTexture(gl.TEXTURE_2D, this.previewTextures[2]);
-          gl.uniform1i(loc, 2);
-      });
-    } else {
-      this.quadRenderPass.addUniform("tex2",
-        (gl: WebGLRenderingContext, loc: WebGLUniformLocation) => {
-          gl.activeTexture(gl.TEXTURE2);
-          gl.bindTexture(gl.TEXTURE_2D, texture);
-          gl.uniform1i(loc, 2);
-      });
-    }
+    gl.activeTexture(gl.TEXTURE3);
+    gl.bindTexture(gl.TEXTURE_2D, this.previewTextures[3]);
+    this.quadRenderPass.addUniform("tex3",
+      (gl: WebGLRenderingContext, loc: WebGLUniformLocation) => {
+        gl.uniform1i(loc, 3);
+    });
+   
+    gl.activeTexture(gl.TEXTURE4);
+    gl.bindTexture(gl.TEXTURE_2D, this.createDefaultTexture());
+    this.quadRenderPass.addUniform("tex4",
+      (gl: WebGLRenderingContext, loc: WebGLUniformLocation) => {
+        gl.uniform1i(loc, 4);
+    });
     
-    if (num_textures > 3) {
-      this.quadRenderPass.addUniform("tex3",
-        (gl: WebGLRenderingContext, loc: WebGLUniformLocation) => {
-          gl.activeTexture(gl.TEXTURE3);
-          gl.bindTexture(gl.TEXTURE_2D, this.previewTextures[3]);
-          gl.uniform1i(loc, 3);
-      });
-    } else {
-      this.quadRenderPass.addUniform("tex3",
-        (gl: WebGLRenderingContext, loc: WebGLUniformLocation) => {
-          gl.activeTexture(gl.TEXTURE3);
-          gl.bindTexture(gl.TEXTURE_2D, texture);
-          gl.uniform1i(loc, 3);
-      });
-    }
     this.quadRenderPass.addUniform("selectedKF",
       (gl: WebGLRenderingContext, loc: WebGLUniformLocation) => {
         gl.uniform1f(loc, this.gui.getSelectedKF());
+    });
+
+    this.quadRenderPass.addUniform("numKeyFrames",
+      (gl: WebGLRenderingContext, loc: WebGLUniformLocation) => {
+        gl.uniform1f(loc, this.gui.getNumKeyFrames());
     });
   }
 

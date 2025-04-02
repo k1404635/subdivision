@@ -213,11 +213,6 @@ export const quadVSText = `
     varying vec2 uv;
     varying vec2 tc;
 
-    uniform sampler2D tex0;
-    uniform sampler2D tex1;
-    uniform sampler2D tex2;
-    uniform sampler2D tex3;
-
     void main() {
         gl_Position = vec4(vertPosition, 0.0, 1.0);
         uv = vertPosition;
@@ -232,23 +227,60 @@ export const quadFSText = `
 
     varying vec2 uv;
     varying vec2 tc;
-    //bring in number of keyframes
 
     uniform sampler2D tex0;
     uniform sampler2D tex1;
     uniform sampler2D tex2;
     uniform sampler2D tex3;
+    uniform sampler2D tex4;
+
+    uniform float selectedKF;
+    uniform float numKeyFrames;
 
     void main () {
-        if((abs(uv.y-.14) < .1) && (abs(uv.x-.5) < 0.667)) { //last one
-            gl_FragColor = texture2D(tex3, tc);
-        } else if((abs(uv.y-.38) < .1) && (abs(uv.x-.5) < 0.667)) {
-            gl_FragColor = texture2D(tex2, tc);
-        } else if((abs(uv.y-0.62) < .1) && (abs(uv.x-.5) < 0.667)) {
-            gl_FragColor = texture2D(tex1, tc);
-        } else if((abs(uv.y-0.86) < .1) && (abs(uv.x-.5) < 0.667)) { //first one
-            gl_FragColor = texture2D(tex0, tc);
+        int kf = int(selectedKF);
+        if(kf == -1) {
+            gl_FragColor = vec4(0.0, 0.37254903, 0.37254903, 1.0);
         }
+        
+        int numKFs = int(numKeyFrames);
+
+        if((abs(uv.y-0.14) < .1) && (abs(uv.x-.5) < 0.667)) { //last one
+            if(numKFs > 3)
+                gl_FragColor = texture2D(tex3, tc);
+            else
+                gl_FragColor = texture2D(tex4, tc); 
+        } else if((abs(uv.y-.38) < .1) && (abs(uv.x-.5) < 0.667)) {
+            if(numKFs > 2)
+                gl_FragColor = texture2D(tex2, tc);
+            else
+                gl_FragColor = texture2D(tex4, tc); 
+        } else if((abs(uv.y-0.62) < .1) && (abs(uv.x-.5) < 0.667)) {
+            if(numKFs > 1)
+                gl_FragColor = texture2D(tex1, tc);
+            else
+                gl_FragColor = texture2D(tex4, tc); 
+        } else if((abs(uv.y-0.86) < .1) && (abs(uv.x-.5) < 0.667)) { //first one
+            if(numKFs > 0)
+                gl_FragColor = texture2D(tex0, tc);
+            else
+                gl_FragColor = texture2D(tex4, tc); 
+        }
+        
+        // if(kf == 0) {
+        // if((abs(uv.y-0.03) < .013)) { //last one
+        //     gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+        // }
+        // if(uv.x > 0.0) {
+        //     gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+        // }
+        // } else if(kf == 1) {
+        //     //
+        // } else if(kf == 2) {
+        //     //
+        // } else if(kf == 3) {
+        //     //
+        // }
     }
 `;
 //# sourceMappingURL=Shaders.js.map
