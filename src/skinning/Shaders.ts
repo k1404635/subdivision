@@ -229,7 +229,7 @@ export const previewFSText = `
             if(abs(uv.x) > 0.05 && abs(uv.x) < 0.064 && abs(uv.y) > 0.03 && abs(uv.y) < 0.25) { //left line
                 gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
             }
-           if(abs(uv.x) > 0.936 && abs(uv.x) < 0.95 && abs(uv.y) > 0.03 && abs(uv.y) < 0.25) { //left line
+           if(abs(uv.x) > 0.936 && abs(uv.x) < 0.95 && abs(uv.y) > 0.03 && abs(uv.y) < 0.25) { //right line
                 gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
             }
         } else if(kf == 2) {
@@ -242,7 +242,7 @@ export const previewFSText = `
             if(abs(uv.x) > 0.05 && abs(uv.x) < 0.064 && abs(uv.y) > 0.27 && abs(uv.y) < 0.49) { //left line
                 gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
             }
-           if(abs(uv.x) > 0.936 && abs(uv.x) < 0.95 && abs(uv.y) > 0.27 && abs(uv.y) < 0.49) { //left line
+           if(abs(uv.x) > 0.936 && abs(uv.x) < 0.95 && abs(uv.y) > 0.27 && abs(uv.y) < 0.49) { //right line
                 gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
             }
         } else if(kf == 1) {
@@ -255,7 +255,7 @@ export const previewFSText = `
             if(abs(uv.x) > 0.05 && abs(uv.x) < 0.064 && abs(uv.y) > 0.51 && abs(uv.y) < 0.73) { //left line
                 gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
             }
-           if(abs(uv.x) > 0.936 && abs(uv.x) < 0.95 && abs(uv.y) > 0.51 && abs(uv.y) < 0.73) { //left line
+           if(abs(uv.x) > 0.936 && abs(uv.x) < 0.95 && abs(uv.y) > 0.51 && abs(uv.y) < 0.73) { //right line
                 gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
             }
         } else if(kf == 0) {
@@ -268,7 +268,7 @@ export const previewFSText = `
             if(abs(uv.x) > 0.05 && abs(uv.x) < 0.064 && abs(uv.y) > 0.75 && abs(uv.y) < 0.97) { //left line
                 gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
             }
-           if(abs(uv.x) > 0.936 && abs(uv.x) < 0.95 && abs(uv.y) > 0.75 && abs(uv.y) < 0.97) { //left line
+           if(abs(uv.x) > 0.936 && abs(uv.x) < 0.95 && abs(uv.y) > 0.75 && abs(uv.y) < 0.97) { //right line
                 gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
             }
         }
@@ -316,12 +316,12 @@ export const quadFSText = `
                 gl_FragColor = texture2D(tex3, tc);
             else
                 gl_FragColor = texture2D(tex4, tc); 
-        } else if((abs(uv.y-.38) < .1) && (abs(uv.x-.5) < 0.667)) {
+        } else if((abs(uv.y-.38) < .1) && (abs(uv.x-.5) < 0.667)) { //third one
             if(numKFs > 2)
                 gl_FragColor = texture2D(tex2, tc);
             else
                 gl_FragColor = texture2D(tex4, tc); 
-        } else if((abs(uv.y-0.62) < .1) && (abs(uv.x-.5) < 0.667)) {
+        } else if((abs(uv.y-0.62) < .1) && (abs(uv.x-.5) < 0.667)) { //second one
             if(numKFs > 1)
                 gl_FragColor = texture2D(tex1, tc);
             else

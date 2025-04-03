@@ -1,14 +1,20 @@
 # virtual-mannequin
 Sooyeon Yang (sy22975), Coco Zhou (ccz247)
 
-Milestone 1:
-    For bone picking, our code simply changes the bone color to white if it is highlighted.
-    Our code matches the behavior shown in the reference version for bone rolling. For bone manipulation with the mouse,
-    it isn't exactly like the reference, but you should be able to orient all bones in any position through a combination
-    of camera movement/rotations and bone rotations.
-    For skinning, our code appears to match the reference.
+Milestone 2: 
+- Keyframe Animation
+    - Implemented K, P, and R keys as specified by the specs. Our implementation matches
+    the reference implementation. The animations will always take the shortest path between any two keyframes.
+- Keyframe Preview
+    - Rendered each keyframe to a texture and mapped those textures to the quads
+    in the preview area. We did not implement optional scrolling so only the first 4 keyframes
+    are visible in the preview section.
+- Keyframe Management
+    - Implemented U, Delete, and = keys to work as specified in the specs. 
+    Selecting a keyframe will also highlight the keyframe with red. A red box will appear around the keyframe. 
 
-    Extra credit:
-    - Find or create your own character model, rig, and skinning weights, and create some images showcasing different poses of the character.
-    We made a folder named "extra_credit" in the src to hold the images of the model we found in different poses.
-    The model itself can be viewed by pressing the Digit8 key.
+Extra Credit: 
+- Creative Scene
+    - We created an elaborate animation of the Pokedance using the existing 
+    human skeleton model and edited it into a video to go along with it. 
+    - Youtube Video Link: https://www.youtube.com/watch?v=afZiwDh_ADw

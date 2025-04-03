@@ -131,80 +131,6 @@ export class SkinningAnimation extends CanvasAnimation {
 
     this.sBackRenderPass.setDrawData(this.ctx.TRIANGLES, 6, this.ctx.UNSIGNED_INT, 0);
     this.sBackRenderPass.setup();
-
-    // this.initPreview();
-    this.previewRenderPass.setDrawData(this.ctx.TRIANGLES, 6, this.ctx.UNSIGNED_INT, 0);
-    this.previewRenderPass.setup();
-
-    // Textured Quads
-    let quad_verts = new Float32Array([
-      -0.667, 0.92,
-      -0.667, 0.52, 
-      0.667, 0.92, 
-      0.667, 0.52, 
-
-      -0.667, 0.44,
-      -0.667, 0.04, 
-      0.667, 0.44, 
-      0.667, 0.04, 
-
-      -0.667, -0.04,
-      -0.667, -0.44, 
-      0.667, -0.04, 
-      0.667, -0.44, 
-
-      -0.667, -0.52,
-      -0.667, -0.92, 
-      0.667, -0.52, 
-      0.667, -0.92
-    ]);
-   
-    let quad_indices = new Uint32Array([
-      0, 1, 2, 
-      2, 1, 3, 
-
-      4, 5, 6, 
-      6, 5, 7, 
-
-      8, 9, 10, 
-      10, 9, 11, 
-
-      12, 13, 14, 
-      14, 13, 15
-    ]);
-
-    let texcoords = new Float32Array([
-      0, 1, 
-      0, 0, 
-      1, 1, 
-      1, 0, 
-
-      0, 1, 
-      0, 0, 
-      1, 1, 
-      1, 0,
-
-      0, 1, 
-      0, 0, 
-      1, 1, 
-      1, 0,
-
-      0, 1, 
-      0, 0, 
-      1, 1, 
-      1, 0
-    ]); 
-
-    this.quadRenderPass.setIndexBufferData(quad_indices)
-    this.quadRenderPass.addAttribute("vertPosition", 2, this.ctx.FLOAT, false,
-      2 * Float32Array.BYTES_PER_ELEMENT, 0, undefined, quad_verts);
-    this.quadRenderPass.addAttribute("texcoords", 2, this.ctx.FLOAT, false,
-      2 * Uint32Array.BYTES_PER_ELEMENT, 0, undefined, texcoords);
-   
-    this.loadTextures();
-
-    this.quadRenderPass.setDrawData(this.ctx.TRIANGLES, 24, this.ctx.UNSIGNED_INT, 0);
-    this.quadRenderPass.setup();
     }
 
   public initScene(): void {
@@ -212,6 +138,7 @@ export class SkinningAnimation extends CanvasAnimation {
     this.initModel();
     this.initSkeleton();
     this.initPreview();
+    this.initQuads();
     this.gui.reset();
   }
 
@@ -257,7 +184,7 @@ export class SkinningAnimation extends CanvasAnimation {
         2 * Float32Array.BYTES_PER_ELEMENT, 0, undefined, new Float32Array(this.scene.meshes[0].geometry.normal.values.length));
     }
 	
-	//Note that these attributes will error until you use them in the shader
+	  //Note that these attributes will error until you use them in the shader
     this.sceneRenderPass.addAttribute("skinIndices", 4, this.ctx.FLOAT, false,
       4 * Float32Array.BYTES_PER_ELEMENT, 0, undefined, this.scene.meshes[0].geometry.skinIndex.values);
     this.sceneRenderPass.addAttribute("skinWeights", 4, this.ctx.FLOAT, false,
@@ -341,7 +268,7 @@ export class SkinningAnimation extends CanvasAnimation {
     this.skeletonRenderPass.setup();
   }
 
-  	//TODO: Set up a Render Pass for the bone highlighting
+  //TODO: Set up a Render Pass for the bone highlighting
   public initBone(): void {
     // not used
   }
@@ -408,10 +335,11 @@ export class SkinningAnimation extends CanvasAnimation {
       let orientations: Mat4[] = [];
       let gui_time: number = this.getGUI().time;
       let keyframes: Keyframe[] = this.getScene().meshes[0].keyframes;
-      if (gui_time >= this.getGUI().getMaxTime()) { // does doing this still allow regular rotations? Check when testing
+      if (gui_time >= this.getGUI().getMaxTime()) { 
         this.getGUI().mode = Mode.edit;
       } else {
         let curr_keyframe: Keyframe = new Keyframe(0, 0, 0);
+
         // find current keyframe
         for (let i: number = 0; i < keyframes.length; i++) {
           curr_keyframe = keyframes[i];
@@ -428,7 +356,6 @@ export class SkinningAnimation extends CanvasAnimation {
             let prev_quat: Quat = prev_keyframe.getOrientations()[i].copy().toMat3().toQuat();
             let curr_quat: Quat = curr_keyframe.getOrientations()[i].copy().toMat3().toQuat();
             Quat.slerpShort(prev_quat, curr_quat, gui_time - curr_keyframe.startTime, curr_orientation);
-            // Quat.slerp(prev_quat, curr_quat, gui_time - curr_keyframe.startTime, curr_orientation);
             curr.setRMatrix(curr_orientation.toMat4(), bones, false, false);
           }
         }
@@ -461,7 +388,7 @@ export class SkinningAnimation extends CanvasAnimation {
       this.sBackRenderPass.draw();      
     }    
 
-    /* Draw preview section */
+    /* Draw preview section with quads */
     if (this.scene.meshes.length > 0) {
       gl.viewport(800, 0, 320, 800);
       this.previewRenderPass.draw();
@@ -557,11 +484,7 @@ export class SkinningAnimation extends CanvasAnimation {
     else
       this.previewTextures[index] = targetTexture;
 
-    this.loadTextures();
-
-    this.quadRenderPass.setDrawData(this.ctx.TRIANGLES, 24, this.ctx.UNSIGNED_INT, 0);
-    this.quadRenderPass.setup();
-
+    this.updateTextures();
   }
 
   public updateTextures(): void {
@@ -578,11 +501,15 @@ export class SkinningAnimation extends CanvasAnimation {
     
     gl.activeTexture(gl.TEXTURE3);
     gl.bindTexture(gl.TEXTURE_2D, this.previewTextures[3]);
+
+    gl.activeTexture(gl.TEXTURE4);
+    gl.bindTexture(gl.TEXTURE_2D, this.createDefaultTexture());
   }
 
-  public loadTextures(): void {
+  public initQuads(): void {
     // set uniforms for drawing the preview
     let gl = this.ctx;
+    this.quadRenderPass = new RenderPass(this.extVAO, gl, quadVSText, quadFSText);
 
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this.previewTextures[0]);
@@ -623,6 +550,75 @@ export class SkinningAnimation extends CanvasAnimation {
       (gl: WebGLRenderingContext, loc: WebGLUniformLocation) => {
         gl.uniform1f(loc, this.gui.getNumKeyFrames());
     });
+
+    
+    // Textured Quads
+    let quad_verts = new Float32Array([
+      -0.667, 0.92,
+      -0.667, 0.52, 
+      0.667, 0.92, 
+      0.667, 0.52, 
+
+      -0.667, 0.44,
+      -0.667, 0.04, 
+      0.667, 0.44, 
+      0.667, 0.04, 
+
+      -0.667, -0.04,
+      -0.667, -0.44, 
+      0.667, -0.04, 
+      0.667, -0.44, 
+
+      -0.667, -0.52,
+      -0.667, -0.92, 
+      0.667, -0.52, 
+      0.667, -0.92
+    ]);
+   
+    let quad_indices = new Uint32Array([
+      0, 1, 2, 
+      2, 1, 3, 
+
+      4, 5, 6, 
+      6, 5, 7, 
+
+      8, 9, 10, 
+      10, 9, 11, 
+
+      12, 13, 14, 
+      14, 13, 15
+    ]);
+
+    let texcoords = new Float32Array([
+      0, 1, 
+      0, 0, 
+      1, 1, 
+      1, 0, 
+
+      0, 1, 
+      0, 0, 
+      1, 1, 
+      1, 0,
+
+      0, 1, 
+      0, 0, 
+      1, 1, 
+      1, 0,
+
+      0, 1, 
+      0, 0, 
+      1, 1, 
+      1, 0
+    ]); 
+
+    this.quadRenderPass.setIndexBufferData(quad_indices)
+    this.quadRenderPass.addAttribute("vertPosition", 2, this.ctx.FLOAT, false,
+      2 * Float32Array.BYTES_PER_ELEMENT, 0, undefined, quad_verts);
+    this.quadRenderPass.addAttribute("texcoords", 2, this.ctx.FLOAT, false,
+      2 * Uint32Array.BYTES_PER_ELEMENT, 0, undefined, texcoords);
+
+    this.quadRenderPass.setDrawData(this.ctx.TRIANGLES, 24, this.ctx.UNSIGNED_INT, 0);
+    this.quadRenderPass.setup();
   }
 
   public createDefaultTexture(): WebGLTexture {
