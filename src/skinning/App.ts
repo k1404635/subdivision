@@ -17,7 +17,11 @@ import {
   previewVSText,
   previewFSText, 
   quadVSText, 
-  quadFSText
+  quadFSText,
+  quadMeshVSText,
+  quadMeshFSText,
+  lineVSText,
+  lineFSText
 } from "./Shaders.js";
 import { Mat4, Vec4, Vec3, Quat, Mat3 } from "../lib/TSM.js";
 import { CLoader } from "./AnimationFileLoader.js";
@@ -55,6 +59,10 @@ export class SkinningAnimation extends CanvasAnimation {
   /* For rendering the preview background */
   private previewRenderPass: RenderPass;
 
+  /* Testing out draw quadrilateral meshes and just lines */
+  private quadMeshRenderPass: RenderPass;
+  private linesRenderPass: RenderPass;
+
   /* Global Rendering Info */
   private lightPosition: Vec4;
   private backgroundColor: Vec4;
@@ -86,7 +94,10 @@ export class SkinningAnimation extends CanvasAnimation {
     this.skeletonRenderPass = new RenderPass(this.extVAO, gl, skeletonVSText, skeletonFSText);
     // Preview section
     this.previewRenderPass = new RenderPass(this.extVAO, gl, previewVSText, previewFSText);
-	//TODO: Add in other rendering initializations for other shaders such as bone highlighting
+	  //TODO: Add in other rendering initializations for other shaders such as bone highlighting
+    // Testing quad meshes and lines
+    this.quadMeshRenderPass = new RenderPass(this.extVAO, gl, quadMeshVSText, quadMeshFSText);
+    this.linesRenderPass = new RenderPass(this.extVAO, gl, lineVSText, lineFSText);
 
     this.gui = new GUI(this.canvas2d, this);
     this.lightPosition = new Vec4([-10, 10, -10, 1]);
@@ -139,6 +150,7 @@ export class SkinningAnimation extends CanvasAnimation {
     this.initSkeleton();
     this.initPreview();
     this.initQuads();
+    this.initLines();
     this.gui.reset();
   }
 
@@ -266,6 +278,37 @@ export class SkinningAnimation extends CanvasAnimation {
     this.skeletonRenderPass.setDrawData(this.ctx.LINES,
       this.scene.meshes[0].getBoneIndices().length, this.ctx.UNSIGNED_INT, 0);
     this.skeletonRenderPass.setup();
+  }
+
+  public initQuadMesh(): void {
+    //
+  }
+
+  public initLines(): void {
+    let gl = this.ctx;
+    this.linesRenderPass = new RenderPass(this.extVAO, gl, lineVSText, lineFSText);
+
+    this.linesRenderPass.addUniform("uWorld",
+      (gl: WebGLRenderingContext, loc: WebGLUniformLocation) => {
+        gl.uniformMatrix4fv(loc, false, new Float32Array(Mat4.identity.all()));
+    });
+    this.linesRenderPass.addUniform("uProj",
+      (gl: WebGLRenderingContext, loc: WebGLUniformLocation) => {
+        gl.uniformMatrix4fv(loc, false, new Float32Array(this.gui.projMatrix().all()));
+    });
+    this.linesRenderPass.addUniform("uView",
+      (gl: WebGLRenderingContext, loc: WebGLUniformLocation) => {
+        gl.uniformMatrix4fv(loc, false, new Float32Array(this.gui.viewMatrix().all()));
+    });
+
+    let verts = new Float32Array([0.0, 0.0, 0.0, 1.0, 1.0, 1.0]);
+    // let verts = new Float32Array([-100.0, 0.0, -100.0, 100.0, 0.0, 100.0]);
+    this.linesRenderPass.setIndexBufferData(new Uint32Array([0, 1]));
+    this.linesRenderPass.addAttribute("vertPosition", 3, this.ctx.FLOAT, false,
+      3 * Float32Array.BYTES_PER_ELEMENT, 0, undefined, verts);
+
+    this.linesRenderPass.setDrawData(this.ctx.LINES, 2, this.ctx.UNSIGNED_INT, 0);
+    this.linesRenderPass.setup();
   }
 
   //TODO: Set up a Render Pass for the bone highlighting
@@ -410,7 +453,9 @@ export class SkinningAnimation extends CanvasAnimation {
       gl.disable(gl.DEPTH_TEST);
       this.skeletonRenderPass.draw();
 	    //TODO: Add functionality for drawing the highlighted bone when necessary
+      // this.linesRenderPass.draw();
       gl.enable(gl.DEPTH_TEST);      
+      
     }
   }
 

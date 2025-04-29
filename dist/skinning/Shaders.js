@@ -320,4 +320,68 @@ export const quadFSText = `
         }
     }
 `;
+export const quadMeshVSText = `
+    precision mediump float;
+
+    // uniform vec4 uLightPos;
+    // uniform mat4 uWorld;
+    // uniform mat4 uView;
+    // uniform mat4 uProj;
+    
+    // attribute vec4 aVertPos;
+
+    // varying vec4 vClipPos;
+
+    void main () {
+
+        // gl_Position = uProj * uView * uWorld * aVertPos;
+        // vClipPos = gl_Position;
+    }
+`;
+export const quadMeshFSText = `
+    precision mediump float;
+
+    // uniform mat4 uViewInv;
+    // uniform mat4 uProjInv;
+    // uniform vec4 uLightPos;
+
+    // varying vec4 vClipPos;
+
+    void main() {
+        // vec4 wsPos = uViewInv * uProjInv * vec4(vClipPos.xyz/vClipPos.w, 1.0);
+        // wsPos /= wsPos.w;
+        // /* Determine which color square the position is in */
+        // float checkerWidth = 5.0;
+        // float i = floor(wsPos.x / checkerWidth);
+        // float j = floor(wsPos.z / checkerWidth);
+        // vec3 color = mod(i + j, 2.0) * vec3(1.0, 1.0, 1.0);
+
+        // /* Compute light fall off */
+        // vec4 lightDirection = uLightPos - wsPos;
+        // float dot_nl = dot(normalize(lightDirection), vec4(0.0, 1.0, 0.0, 0.0));
+	    // dot_nl = clamp(dot_nl, 0.0, 1.0);
+	
+        // gl_FragColor = vec4(clamp(dot_nl * color, 0.0, 1.0), 1.0);
+    }
+`;
+export const lineVSText = `
+    precision mediump float;
+
+    attribute vec3 vertPosition;
+  
+    uniform mat4 uWorld;
+    uniform mat4 uView;
+    uniform mat4 uProj;
+
+    void main () {
+        gl_Position = uProj * uView * uWorld * vec4(vertPosition, 1.0);
+    }
+`;
+export const lineFSText = `
+    precision mediump float;
+
+    void main() {
+        gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+    }
+`;
 //# sourceMappingURL=Shaders.js.map

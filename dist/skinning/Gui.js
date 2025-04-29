@@ -384,7 +384,7 @@ export class GUI {
             }
             case "Digit8": {
                 this.animation.previewTextures = [];
-                this.animation.setScene("./static/assets/skinning/satellite.dae");
+                this.animation.setScene("./static/assets/skinning/BONES.dae");
                 this.selectedKeyframe = -1;
                 break;
             }

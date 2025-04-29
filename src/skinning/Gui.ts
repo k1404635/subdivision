@@ -485,7 +485,7 @@ export class GUI implements IGUI {
       }
       case "Digit8": {
         this.animation.previewTextures = [];
-        this.animation.setScene("./static/assets/skinning/satellite.dae");
+        this.animation.setScene("./static/assets/skinning/cross_cubes.dae");
         this.selectedKeyframe = -1;
         break;
       }
