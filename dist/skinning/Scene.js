@@ -1,4 +1,4 @@
-import { Mat4, Vec3, Vec4 } from "../lib/TSM.js";
+import { adjacency_data } from "./Subdivision.js";
 //TODO: Generate cylinder geometry for highlighting bones
 //General class for handling GLSL attributes
 export class Attribute {
@@ -31,109 +31,7 @@ export class Bone {
         this.children = Array.from(bone.children);
         this.position = bone.position.copy();
         this.endpoint = bone.endpoint.copy();
-        this.orig_pos = bone.position.copy();
-        this.orig_end = bone.endpoint.copy();
         this.rotation = bone.rotation.copy();
-        this.R = new Mat4();
-        this.T = new Mat4();
-        this.R.setIdentity();
-        this.T.setIdentity();
-        this.D = new Mat4();
-        this.U = new Mat4();
-    }
-    getDMatrix() {
-        return this.D.copy();
-    }
-    setDMatrix(D, bones) {
-        this.D = new Mat4();
-        D.multiply(this.T, this.D);
-        this.D.multiply(this.R);
-        for (let i = 0; i < this.children.length; i++) {
-            let curr = bones[this.children[i]];
-            curr.setDMatrix(this.D.copy(), bones);
-        }
-    }
-    setUMatrix(U, bones) {
-        U.multiply(this.T, this.U);
-        for (let i = 0; i < this.children.length; i++) {
-            let curr = bones[this.children[i]];
-            curr.setUMatrix(this.U.copy(), bones);
-        }
-    }
-    getUMatrix() {
-        return this.U.copy();
-    }
-    setRMatrix(mat, bones, rolling, accumulate) {
-        if (rolling)
-            this.R.multiply(mat);
-        else {
-            let temp = mat.copy();
-            temp.multiply(this.R, this.R);
-        }
-        if (!accumulate)
-            this.R = mat.copy();
-        if (this.parent != -1)
-            this.setDMatrix(bones[this.parent].getDMatrix(), bones);
-        else {
-            this.setDMatrix(this.getUMatrix(), bones);
-        }
-        this.D.copy().toMat3().toQuat(this.rotation);
-        this.updatePoints(bones);
-        let temp = new Vec4([this.position.x, this.position.y, this.position.z, 1.0]);
-        temp = new Vec4([this.endpoint.x, this.endpoint.y, this.endpoint.z, 1.0]);
-    }
-    updatePoints(bones) {
-        let U_inv = new Mat4();
-        this.U.inverse(U_inv);
-        let orig_local_joint = new Vec4([this.orig_pos.x, this.orig_pos.y, this.orig_pos.z, 1.0]);
-        orig_local_joint.multiplyMat4(U_inv);
-        let orig_local_endpoint = new Vec4([this.orig_end.x, this.orig_end.y, this.orig_end.z, 1.0]);
-        orig_local_endpoint.multiplyMat4(U_inv);
-        let temp = new Vec4();
-        this.D.multiplyVec4(orig_local_joint, temp);
-        orig_local_joint.multiplyMat4(this.D, temp);
-        this.position = new Vec3(temp.xyz);
-        temp = new Vec4();
-        this.D.multiplyVec4(orig_local_endpoint, temp);
-        orig_local_endpoint.multiplyMat4(this.D, temp);
-        this.endpoint = new Vec3(temp.xyz);
-        this.D.copy().toMat3().toQuat(this.rotation);
-        for (let i = 0; i < this.children.length; i++) {
-            let curr = bones[this.children[i]];
-            curr.updatePoints(bones);
-        }
-    }
-    getRMatrix() {
-        return this.R.copy();
-    }
-    setTMatrix(bones, root) {
-        if (!root) {
-            let translation = new Vec3();
-            this.position.subtract(bones[this.parent].position, translation);
-            this.T = new Mat4([1, 0, 0, 0,
-                0, 1, 0, 0,
-                0, 0, 1, 0,
-                translation.x, translation.y, translation.z, 1]);
-        }
-    }
-}
-// Class for handling keyframes
-export class Keyframe {
-    constructor(time, i, dur) {
-        this.startTime = time;
-        this.duration = dur;
-        this.index = i;
-        this.orientations = [];
-    }
-    setOrientations(bones) {
-        this.orientations = [];
-        for (let i = 0; i < bones.length; i++) {
-            let curr = bones[i];
-            this.orientations.push(curr.getRMatrix());
-        }
-    }
-    getOrientations() {
-        return this.orientations;
     }
 }
 //Class for handling the overall mesh and rig
@@ -146,42 +44,12 @@ export class Mesh {
         mesh.bones.forEach(bone => {
             this.bones.push(new Bone(bone));
         });
-        this.bones.forEach(bone => {
-            if (bone.parent == -1) { // if root
-                bone.setTMatrix(this.bones, true);
-            }
-            else {
-                bone.setTMatrix(this.bones, false);
-            }
-        });
-        this.bones.forEach(bone => {
-            if (bone.parent == -1) { // if root
-                let array = [1, 0, 0, 0,
-                    0, 1, 0, 0,
-                    0, 0, 1, 0,
-                    bone.position.x, bone.position.y, bone.position.z, 1];
-                bone.setUMatrix(new Mat4(array), this.bones);
-                bone.setDMatrix(new Mat4(array), this.bones);
-            }
-        });
         this.materialName = mesh.materialName;
         this.imgSrc = null;
         this.boneIndices = Array.from(mesh.boneIndices);
         this.bonePositions = new Float32Array(mesh.bonePositions);
         this.boneIndexAttribute = new Float32Array(mesh.boneIndexAttribute);
-        this.keyframes = [];
-    }
-    //TODO: Create functionality for bone manipulation/key-framing
-    // sets bone orientations to orientations from parameter
-    updateOrientations(orientations) {
-        for (let i = 0; i < this.bones.length; i++) {
-            let curr = this.bones[i];
-            curr.setRMatrix(orientations[i], this.bones, false, false);
-        }
-    }
-    // sets bone orientations to first keyframe's orientations
-    resetOrientations() {
-        this.updateOrientations(this.keyframes[0].getOrientations());
+        this.adjacency_data = new adjacency_data(this);
     }
     getBoneIndices() {
         return new Uint32Array(this.boneIndices);
