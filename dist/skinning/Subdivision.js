@@ -96,18 +96,44 @@ export class adjacency_data {
             else
                 edgeVal.add(this.faces.length - 1);
         }
-        console.log("edges: ", this.edgeFaceMap.entries());
-        console.log("faces: ", this.faces.length);
     }
 }
+// for the sake of the demo and testing, we will say that the first edge in the edgeFaceMap is a sharp crease
 export function loopSubdivision(mesh, iterations) {
-    // Make vertex neighbor map and edge-newVertexIndex map
-    let newVertices = [];
-    let edgeFace = new Map();
-    let vertexAdj = new Map();
+    /*
+      - odd = new vertices; even = old vertices
+      - n = # of neighboring vertices
+      - n = 3, beta = 3/16; n > 3, beta = 3/8n
+      - computing odd vertices:
+          - for each edge, check if # of faces for that edge == 2
+          - if == 2 && not sharp crease, then interior vertex, otherwise boundary
+          - if interior, new point on edge = 0.375 * (a+b) + 0.125 * (c+d) where
+              - a and b are endpoints of the edge, and c and d are opposing vertices of the two faces connected to the edge
+          - else (is boundary or sharp edge)
+              - new point on edge is midpoint 0.5 * (a+b)
+          
+      - computing even vertices:
+          - in same loop as ^ if interior, then new value = original point * (1-n*beta) + (sum up all points of neighboring verices) * beta
+          - else (is boundary or sharp edge)
+              - new value = 0.125 * (a+b) + 0.75 * original point
+      
+      - NOTE: - make a map where keys are original vertices and values are new values
+              - make a map (IN CONSTRUCTOR) where key is face, and value is set of edges for that face
+              - make a map where keys are the edges, value is new odd vertex points
+              - edit this.vertices to hold new old values and new points
+                  - MAKE SURE TO REMOVE ORIGINAL VERTEX KEYS AND VALUES (MAYBE JUST MAKE NEW ONES AND SET THE NEW TO THE MAPS)
+              - edit this.vertexAdjMap to hold new points and their adjacent vertices
+                  - MAKE SURE TO REMOVE ORIGINAL VERTEX KEYS AND VALUES
+              - edit this.faces to hold new faces created by the new points
+                  - MAKE SURE TO REMOVE ORIGINAL FACES
+              - edit this.edgeFaceMap to hold new edges from the new points, and the corresponding new faces connected to each
+                  - MAKE SURE TO REMOVE ORIGINAL EDGE AND ORIGINAL FACES
+              - edit this.faceEdgeMap (make this first!!) to hold new faces and the corresponding new edges formed from the new points
+                  - there should be 4 new faces for each original face, AND MAKE SURE TO REMOVE ORIGINAL FACE AND ORIGINAL EDGES
+              - THIS IS ALL ONE ITERATION, SO MAKE A FOR LOOP AROUND THIS THAT GOES UNTIL iterations NUMBER OF TIMES!!!!!!
+    */
 }
 export function catmullClarkSubdivision(mesh, iterations) {
-    // TODO: Implement Catmull-Clark Subdivision algorithm
     //
 }
 //# sourceMappingURL=Subdivision.js.map

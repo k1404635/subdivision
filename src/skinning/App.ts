@@ -150,20 +150,6 @@ export class SkinningAnimation extends CanvasAnimation {
       this.sceneRenderPass.addAttribute("aUV", 2, this.ctx.FLOAT, false,
         2 * Float32Array.BYTES_PER_ELEMENT, 0, undefined, new Float32Array(this.scene.meshes[0].geometry.normal.values.length));
     }
-	
-	//Note that these attributes will error until you use them in the shader
-    // this.sceneRenderPass.addAttribute("skinIndices", 4, this.ctx.FLOAT, false,
-    //   4 * Float32Array.BYTES_PER_ELEMENT, 0, undefined, this.scene.meshes[0].geometry.skinIndex.values);
-    // this.sceneRenderPass.addAttribute("skinWeights", 4, this.ctx.FLOAT, false,
-    //   4 * Float32Array.BYTES_PER_ELEMENT, 0, undefined, this.scene.meshes[0].geometry.skinWeight.values);
-    // this.sceneRenderPass.addAttribute("v0", 3, this.ctx.FLOAT, false,
-    //   3 * Float32Array.BYTES_PER_ELEMENT, 0, undefined, this.scene.meshes[0].geometry.v0.values);
-    // this.sceneRenderPass.addAttribute("v1", 3, this.ctx.FLOAT, false,
-    //   3 * Float32Array.BYTES_PER_ELEMENT, 0, undefined, this.scene.meshes[0].geometry.v1.values);
-    // this.sceneRenderPass.addAttribute("v2", 3, this.ctx.FLOAT, false,
-    //   3 * Float32Array.BYTES_PER_ELEMENT, 0, undefined, this.scene.meshes[0].geometry.v2.values);
-    // this.sceneRenderPass.addAttribute("v3", 3, this.ctx.FLOAT, false,
-    //   3 * Float32Array.BYTES_PER_ELEMENT, 0, undefined, this.scene.meshes[0].geometry.v3.values);
 
     this.sceneRenderPass.addUniform("lightPosition",
       (gl: WebGLRenderingContext, loc: WebGLUniformLocation) => {
