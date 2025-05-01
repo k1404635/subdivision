@@ -6,6 +6,7 @@ export class adjacency_data {
         this.vertexAdjMap = new Map();
         this.verts = new Map();
         this.edgeFaceMap = new Map();
+        this.faceEdgeMap = new Map();
         this.faces = [];
         for (let i = 0; i < positions.length; i += 9) {
             const v1 = `${positions[i]},${positions[i + 1]},${positions[i + 2]}`;
@@ -17,38 +18,27 @@ export class adjacency_data {
             // vertex adjacency
             let val = this.vertexAdjMap.get(v1);
             if (val != undefined) {
-                val.add(v2);
-                val.add(v3);
+                val.push(v2);
+                val.push(v3);
             }
-            else {
-                const set = new Set();
-                set.add(v2);
-                set.add(v3);
-                this.vertexAdjMap.set(v1, set);
-            }
+            else
+                this.vertexAdjMap.set(v1, [v2, v3]);
             val = this.vertexAdjMap.get(v2);
             if (val != undefined) {
-                val.add(v1);
-                val.add(v3);
+                val.push(v1);
+                val.push(v3);
             }
-            else {
-                const set = new Set();
-                set.add(v1);
-                set.add(v3);
-                this.vertexAdjMap.set(v2, set);
-            }
+            else
+                this.vertexAdjMap.set(v2, [v1, v3]);
             val = this.vertexAdjMap.get(v3);
             if (val != undefined) {
-                val.add(v1);
-                val.add(v2);
+                val.push(v1);
+                val.push(v2);
             }
-            else {
-                const set = new Set();
-                set.add(v1);
-                set.add(v2);
-                this.vertexAdjMap.set(v3, set);
-            }
+            else
+                this.vertexAdjMap.set(v3, [v1, v2]);
             this.faces.push([v1, v2, v3]);
+            const face_index = this.faces.length - 1;
             // make edges and set map for edge-face relations
             let edge1 = v1 + '=>' + v2;
             let edge2 = v1 + '=>' + v3;
@@ -57,60 +47,135 @@ export class adjacency_data {
             if (edgeVal == undefined) {
                 edge1 = v2 + '=>' + v1;
                 edgeVal = this.edgeFaceMap.get(edge1);
-                if (edgeVal == undefined) {
-                    const set = new Set();
-                    set.add(this.faces.length - 1);
-                    this.edgeFaceMap.set(edge1, set);
-                }
+                if (edgeVal == undefined)
+                    this.edgeFaceMap.set(edge1, [face_index]);
                 else
-                    edgeVal.add(this.faces.length - 1);
+                    edgeVal.push(face_index);
             }
             else
-                edgeVal.add(this.faces.length - 1);
+                edgeVal.push(face_index);
             edgeVal = this.edgeFaceMap.get(edge2);
             if (edgeVal == undefined) {
                 edge2 = v3 + '=>' + v1;
                 edgeVal = this.edgeFaceMap.get(edge2);
-                if (edgeVal == undefined) {
-                    const set = new Set();
-                    set.add(this.faces.length - 1);
-                    this.edgeFaceMap.set(edge2, set);
-                }
+                if (edgeVal == undefined)
+                    this.edgeFaceMap.set(edge2, [face_index]);
                 else
-                    edgeVal.add(this.faces.length - 1);
+                    edgeVal.push(face_index);
             }
             else
-                edgeVal.add(this.faces.length - 1);
+                edgeVal.push(face_index);
             edgeVal = this.edgeFaceMap.get(edge3);
             if (edgeVal == undefined) {
                 edge3 = v3 + '=>' + v2;
                 edgeVal = this.edgeFaceMap.get(edge3);
-                if (edgeVal == undefined) {
-                    const set = new Set();
-                    set.add(this.faces.length - 1);
-                    this.edgeFaceMap.set(edge3, set);
-                }
+                if (edgeVal == undefined)
+                    this.edgeFaceMap.set(edge3, [face_index]);
                 else
-                    edgeVal.add(this.faces.length - 1);
+                    edgeVal.push(face_index);
             }
             else
-                edgeVal.add(this.faces.length - 1);
+                edgeVal.push(face_index);
+            // make faceEdgeMap
+            let face_edges = this.faceEdgeMap.get(face_index);
+            if (face_edges != undefined) {
+                face_edges.push(edge1);
+                face_edges.push(edge2);
+                face_edges.push(edge3);
+            }
+            else
+                this.faceEdgeMap.set(face_index, [edge1, edge2, edge3]);
+        }
+        this.removeDuplicatesFromMaps();
+        // const numbers = [1, 2, 2, 3, 4, 4, 5];
+        // const uniqueNumbers = Array.from(new Set(numbers));
+        // console.log(uniqueNumbers); // [1, 2, 3, 4, 5]
+        console.log("vertex adj: ", this.vertexAdjMap.entries());
+        console.log("faceedge: ", this.faceEdgeMap.entries());
+        console.log("edgeface: ", this.edgeFaceMap.entries());
+    }
+    removeDuplicatesFromMaps() {
+        // Remove duplicates from vertexAdjMap
+        for (const [key, value] of this.vertexAdjMap.entries()) {
+            const unique = Array.from(new Set(value));
+            this.vertexAdjMap.set(key, unique);
+        }
+        // Remove duplicates from faceEdgeMap
+        for (const [key, value] of this.faceEdgeMap.entries()) {
+            const unique = Array.from(new Set(value));
+            this.faceEdgeMap.set(key, unique);
+        }
+        // Remove duplicates from edgeFaceMap
+        for (const [key, value] of this.edgeFaceMap.entries()) {
+            const unique = Array.from(new Set(value));
+            this.edgeFaceMap.set(key, unique);
         }
     }
 }
+function find_opposing_vertex(edge_on_face, edge, v1, v2) {
+    let opp_vert_str = '';
+    if (!edge_on_face.includes(edge)) {
+        const [ev1, ev2] = edge_on_face.split('=>');
+        if (!(ev1.includes(v1) || ev1.includes(v2)))
+            opp_vert_str = ev1;
+        else if (!(ev2.includes(v1) || ev2.includes(v2)))
+            opp_vert_str = ev2;
+    }
+    return opp_vert_str;
+}
 // for the sake of the demo and testing, we will say that the first edge in the edgeFaceMap is a sharp crease
-export function loopSubdivision(mesh, iterations) {
+export function loopSubdivision(mesh, iterations, adj) {
+    const new_faces = [];
+    const new_verts = new Map();
+    const new_edgeFaceMap = new Map();
+    const new_vertexAdjMap = new Map();
+    const new_faceEdgeMap = new Map();
+    // compute odd (new) vertices
+    let first = true; // here just to mark first edge as sharp edge
+    let beta = 3.0 / 16.0; // default assumes n = 3
+    for (const [edge, faces] of adj.edgeFaceMap.entries()) {
+        if (faces.size == 2 && !first) { // interior edge (vertices on edge are also interior)
+            //- if interior, new point on edge = 0.375 * (a+b) + 0.125 * (c+d) where 
+            // - a and b are endpoints of the edge, and c and d are opposing vertices of the two faces connected to the edge
+            const [v1, v2] = edge.split('=>');
+            const a = adj.verts.get(v1);
+            const b = adj.verts.get(v2);
+            // get c
+            const face1_iter = adj.faceEdgeMap.values();
+            let edge_on_face1 = face1_iter.next().value;
+            let string_c = find_opposing_vertex(edge_on_face1, edge, v1, v2);
+            if (string_c == '') {
+                edge_on_face1 = face1_iter.next().value;
+                string_c = find_opposing_vertex(edge_on_face1, edge, v1, v2);
+                if (string_c == '') {
+                    edge_on_face1 = face1_iter.next().value;
+                    string_c = find_opposing_vertex(edge_on_face1, edge, v1, v2);
+                }
+            }
+            const c = adj.verts.get(string_c);
+            // get d
+            const face2_iter = adj.faceEdgeMap.values();
+            let edge_on_face2 = face2_iter.next().value;
+            let string_d = find_opposing_vertex(edge_on_face2, edge, v1, v2);
+            if (string_d == '') {
+                edge_on_face2 = face2_iter.next().value;
+                string_d = find_opposing_vertex(edge_on_face2, edge, v1, v2);
+                if (string_d == '') {
+                    edge_on_face2 = face2_iter.next().value;
+                    string_d = find_opposing_vertex(edge_on_face2, edge, v1, v2);
+                }
+            }
+            const d = adj.verts.get(string_d);
+        }
+        else { // boundary or sharp edge
+            first = false;
+            //- new point on edge is midpoint 0.5 * (a+b)
+        }
+    }
     /*
       - odd = new vertices; even = old vertices
       - n = # of neighboring vertices
-      - n = 3, beta = 3/16; n > 3, beta = 3/8n
-      - computing odd vertices:
-          - for each edge, check if # of faces for that edge == 2
-          - if == 2 && not sharp crease, then interior vertex, otherwise boundary
-          - if interior, new point on edge = 0.375 * (a+b) + 0.125 * (c+d) where
-              - a and b are endpoints of the edge, and c and d are opposing vertices of the two faces connected to the edge
-          - else (is boundary or sharp edge)
-              - new point on edge is midpoint 0.5 * (a+b)
+      - n > 3, beta = 3/8n
           
       - computing even vertices:
           - in same loop as ^ if interior, then new value = original point * (1-n*beta) + (sum up all points of neighboring verices) * beta
@@ -131,9 +196,13 @@ export function loopSubdivision(mesh, iterations) {
               - edit this.faceEdgeMap (make this first!!) to hold new faces and the corresponding new edges formed from the new points
                   - there should be 4 new faces for each original face, AND MAKE SURE TO REMOVE ORIGINAL FACE AND ORIGINAL EDGES
               - THIS IS ALL ONE ITERATION, SO MAKE A FOR LOOP AROUND THIS THAT GOES UNTIL iterations NUMBER OF TIMES!!!!!!
+              - AFTER THE LOOP, LOOP THROUGH EACH FACE, GET THE THREE VERTICES ON THAT FACE, CROSS PRODUCT (IN DC) AND ADD TO A NEW
+                  ARRAY OF VERTICES IN COUNTERCLOCKWISE ORDER, AND SET MESH'S GEOMETRY POSTION TO THIS NEW ARRAY
     */
 }
 export function catmullClarkSubdivision(mesh, iterations) {
-    //
+    /*
+      PSEUDOCODE THIS NEXT
+    */
 }
 //# sourceMappingURL=Subdivision.js.map
