@@ -68,7 +68,6 @@ export class Mesh {
   public bones: Bone[];
   public materialName: string;
   public imgSrc: String | null;
-  public adjacency_data: adjacency_data;
 
   private boneIndices: number[];
   private bonePositions: Float32Array;
@@ -87,7 +86,6 @@ export class Mesh {
     this.boneIndices = Array.from(mesh.boneIndices);
     this.bonePositions = new Float32Array(mesh.bonePositions);
     this.boneIndexAttribute = new Float32Array(mesh.boneIndexAttribute);
-    this.adjacency_data = new adjacency_data(this);
   }
 
   public getBoneIndices(): Uint32Array {

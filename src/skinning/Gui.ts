@@ -4,7 +4,7 @@ import { SkinningAnimation } from "./App.js";
 import { Mat4, Vec3, Vec4, Vec2, Mat2, Quat } from "../lib/TSM.js";
 import { Bone, Mesh } from "./Scene.js";
 import { RenderPass } from "../lib/webglutils/RenderPass.js";
-import { adjacency_data } from "./Subdivision.js";
+import { adjacency_data, loopSubdivision } from "./Subdivision.js";
 
 /**
  * Might be useful for designing any animation GUI
@@ -250,7 +250,12 @@ export class GUI implements IGUI {
     switch (key.code) {
       case "Digit1": {
         this.animation.setScene("./static/assets/skinning/mapped_cube.dae");
-        //
+        const mesh = this.animation.getScene().meshes[0];
+        console.log("meshes: ", this.animation.getScene().meshes);
+        if(this.animation.getScene().meshes == undefined)
+          console.log("broooooooooooooooooo");
+        const adj = new adjacency_data(mesh);
+        loopSubdivision(mesh, 1, adj);
         break;
       }
       case "Digit2": {
@@ -279,7 +284,6 @@ export class GUI implements IGUI {
       }
       case "Digit8": {
         this.animation.setScene("./static/assets/skinning/cross_cubes.dae");
-        // this.animation.getScene().meshes[0];
         break;
       }
       case "KeyW": {

@@ -1,4 +1,3 @@
-import { adjacency_data } from "./Subdivision.js";
 //TODO: Generate cylinder geometry for highlighting bones
 //General class for handling GLSL attributes
 export class Attribute {
@@ -49,7 +48,6 @@ export class Mesh {
         this.boneIndices = Array.from(mesh.boneIndices);
         this.bonePositions = new Float32Array(mesh.bonePositions);
         this.boneIndexAttribute = new Float32Array(mesh.boneIndexAttribute);
-        this.adjacency_data = new adjacency_data(this);
     }
     getBoneIndices() {
         return new Uint32Array(this.boneIndices);

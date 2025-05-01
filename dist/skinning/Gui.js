@@ -1,5 +1,6 @@
 import { Camera } from "../lib/webglutils/Camera.js";
 import { Vec3 } from "../lib/TSM.js";
+import { adjacency_data, loopSubdivision } from "./Subdivision.js";
 export var Mode;
 (function (Mode) {
     Mode[Mode["playback"] = 0] = "playback";
@@ -167,7 +168,12 @@ export class GUI {
         switch (key.code) {
             case "Digit1": {
                 this.animation.setScene("./static/assets/skinning/mapped_cube.dae");
-                //
+                const mesh = this.animation.getScene().meshes[0];
+                console.log("meshes: ", this.animation.getScene().meshes);
+                if (this.animation.getScene().meshes == undefined)
+                    console.log("broooooooooooooooooo");
+                const adj = new adjacency_data(mesh);
+                loopSubdivision(mesh, 1, adj);
                 break;
             }
             case "Digit2": {
@@ -196,7 +202,6 @@ export class GUI {
             }
             case "Digit8": {
                 this.animation.setScene("./static/assets/skinning/cross_cubes.dae");
-                // this.animation.getScene().meshes[0];
                 break;
             }
             case "KeyW": {
