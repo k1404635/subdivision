@@ -129,18 +129,6 @@ export class adjacency_data {
   }
 }
 
-function find_opposing_vertex(edge_on_face: string, edge: string, v1: string, v2: string): string {
-  let opp_vert_str: string = '';
-  if(!edge_on_face.includes(edge)) {
-    const [ev1, ev2] = edge_on_face.split('=>');
-    if(!(ev1.includes(v1) || ev1.includes(v2)))
-      opp_vert_str = ev1;
-    else if(!(ev2.includes(v1) || ev2.includes(v2)))
-      opp_vert_str = ev2;
-  }
-  return opp_vert_str;
-}
-
 // for the sake of the demo and testing, we will say that the first edge in the edgeFaceMap is a sharp crease
 export function loopSubdivision(mesh: Mesh, iterations: number, adj: adjacency_data): void {
   const new_faces: string[][] = []; 
@@ -151,20 +139,63 @@ export function loopSubdivision(mesh: Mesh, iterations: number, adj: adjacency_d
   const oldedge_vertMap: Map<string, string> = new Map<string, string>();
   const oldvert_newvert: Map<string, Vec3> = new Map<string, Vec3>();
 
-  // compute odd (new) vertices & compute even (old) vertices
   let beta: number = 3.0/16.0; // default assumes n = 3, n = # of neighboring vertices
   let first: boolean = true; // here just to mark first edge as sharp edge
-  /*     - n > 3, beta = 3/8n            
-        
-    - computing even vertices:
-        - in same loop as ^ if interior, then new value = original point * (1-n*beta) + (sum up all points of neighboring verices) * beta
-        - else (is boundary or sharp edge)
-            - new value = 0.125 * (a+b) + 0.75 * original point */
   for (const [edge, faces] of adj.edgeFaceMap.entries()) {
     const [v1, v2] = edge.split('=>');
     const a = adj.verts.get(v1);
     const b = adj.verts.get(v2);
     if(faces.length == 2 && !first) { // interior edge (vertices on edge are also interior)
+      // compute even (new) vertices
+      if(a == undefined)
+        console.log("huhhhhhhhhha");
+      else {
+        let new_vert_v1: Vec3 = new Vec3();
+        const adj_verts_v1 = adj.vertexAdjMap.get(v1);
+        if(adj_verts_v1 == undefined)
+          console.log("huhadjv1");
+        else {
+          const n = adj_verts_v1.length;
+          let sum: Vec3 = new Vec3();
+          for(let i = 0; i < n; i++) {
+            const [adj1, adj2, adj3] = adj_verts_v1[i].split(',').map(Number);
+            sum.add(new Vec3([adj1, adj2, adj3]));
+          }
+          if(n > 3)
+            beta = 3.0 / (8.0 * n);
+          // new value = original point * (1-n*beta) + (sum up all points of neighboring vertices) * beta
+          sum.scale(beta);
+          a.scale(1 - n*beta, new_vert_v1);
+          new_vert_v1.add(sum);
+          oldvert_newvert.set(v1, new_vert_v1);
+        }
+      }
+      
+      if(b == undefined)
+        console.log("huhhhhhhhhhb");
+      else {
+        let new_vert_v2: Vec3 = new Vec3();
+        const adj_verts_v2 = adj.vertexAdjMap.get(v2);
+        if(adj_verts_v2 == undefined)
+          console.log("huhadjv2");
+        else {
+          const n = adj_verts_v2.length;
+          let sum: Vec3 = new Vec3();
+          for(let i = 0; i < n; i++) {
+            const [adj1, adj2, adj3] = adj_verts_v2[i].split(',').map(Number);
+            sum.add(new Vec3([adj1, adj2, adj3]));
+          }
+          if(n > 3)
+            beta = 3.0 / (8.0 * n);
+          // new value = original point * (1-n*beta) + (sum up all points of neighboring vertices) * beta
+          sum.scale(beta);
+          b.scale(1 - n*beta, new_vert_v2);
+          new_vert_v2.add(sum);
+          oldvert_newvert.set(v2, new_vert_v2);
+        }
+      }
+
+      // compute odd (old) vertices
       // get c
       const edges_on_face1 = adj.faceEdgeMap.get(faces[0]);
       let string_c: string = '';
@@ -205,16 +236,46 @@ export function loopSubdivision(mesh: Mesh, iterations: number, adj: adjacency_d
 
       let new_vert: Vec3 = new Vec3();
       if(a != undefined && b != undefined && c != undefined && d != undefined) {
-        new_vert = ((a.add(b)).scale(0.375)).add((c.add(d)).scale(0.125)); // 0.375 * (a+b) + 0.125 * (c+d)
+        // 0.375 * (a+b) + 0.125 * (c+d)
+        a.add(b, new_vert);
+        new_vert.scale(0.375);
+        let temp_cd: Vec3 = new Vec3();
+        c.add(d, temp_cd);
+        temp_cd.scale(0.125);
+        new_vert.add(temp_cd);
+
         new_verts.set(`${new_vert}`, new_vert);
         oldedge_vertMap.set(edge, `${new_vert}`);
       } else
         console.log("huhhhhhhabcd");
     } else { // boundary or sharp edge
       first = false;
-      let new_vert: Vec3 = new Vec3();
       if(a != undefined && b != undefined) {
-        new_vert = (a.add(b)).scale(0.5); // 0.5 * (a+b)
+        // compute even (old) vertices
+        // new value = 0.125 * (a+b) + 0.75 * original point
+        let new_vert_v1: Vec3 = new Vec3();
+        a.add(b, new_vert_v1);
+        new_vert_v1.scale(0.125);
+        let temp: Vec3 = new Vec3();
+        a.scale(0.75, temp);
+        new_vert_v1.add(temp);
+
+        let new_vert_v2: Vec3 = new Vec3();
+        a.add(b, new_vert_v2);
+        new_vert_v2.scale(0.125);
+        temp = new Vec3();
+        b.scale(0.75, temp);
+        new_vert_v2.add(temp);
+
+        oldvert_newvert.set(v1, new_vert_v1);
+        oldvert_newvert.set(v2, new_vert_v2);
+
+        // compute odd (new) vertices
+        // 0.5 * (a+b)
+        let new_vert: Vec3 = new Vec3();
+        a.add(b, new_vert);
+        new_vert.scale(0.5);
+
         new_verts.set(`${new_vert}`, new_vert);
         oldedge_vertMap.set(edge, `${new_vert}`);
       } else
