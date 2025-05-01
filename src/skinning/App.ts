@@ -99,7 +99,7 @@ export class SkinningAnimation extends CanvasAnimation {
    */
   public reset(): void {
       this.gui.reset();
-      this.setScene(this.loadedScene);
+      this.setScene(this.loadedScene, 0);
   }
 
   public initGui(): void {
@@ -118,6 +118,7 @@ export class SkinningAnimation extends CanvasAnimation {
   public initScene(): void {
     if (this.scene.meshes.length === 0) { return; }
     this.initModel();
+    // console.log("init model");
     this.initSkeleton();
     this.initLines();
     this.gui.reset();
@@ -137,19 +138,14 @@ export class SkinningAnimation extends CanvasAnimation {
       fIndices[i + 2] = i + 2;
     }    
     this.sceneRenderPass.setIndexBufferData(fIndices);
+    // console.log("norms: ", this.scene.meshes[0].geometry.normal.values);
+    // console.log("afsdfa: ", this.scene.meshes[0].geometry.normal.values.length / 3 >= this.scene.meshes[0].geometry.normal.count * 3)
 
 	//vertPosition is a placeholder value until skinning is in place
     this.sceneRenderPass.addAttribute("vertPosition", 3, this.ctx.FLOAT, false,
     3 * Float32Array.BYTES_PER_ELEMENT, 0, undefined, this.scene.meshes[0].geometry.position.values);
     this.sceneRenderPass.addAttribute("aNorm", 3, this.ctx.FLOAT, false,
       3 * Float32Array.BYTES_PER_ELEMENT, 0, undefined, this.scene.meshes[0].geometry.normal.values);
-    if (this.scene.meshes[0].geometry.uv) {
-      this.sceneRenderPass.addAttribute("aUV", 2, this.ctx.FLOAT, false,
-        2 * Float32Array.BYTES_PER_ELEMENT, 0, undefined, this.scene.meshes[0].geometry.uv.values);
-    } else {
-      this.sceneRenderPass.addAttribute("aUV", 2, this.ctx.FLOAT, false,
-        2 * Float32Array.BYTES_PER_ELEMENT, 0, undefined, new Float32Array(this.scene.meshes[0].geometry.normal.values.length));
-    }
 
     this.sceneRenderPass.addUniform("lightPosition",
       (gl: WebGLRenderingContext, loc: WebGLUniformLocation) => {
@@ -167,16 +163,9 @@ export class SkinningAnimation extends CanvasAnimation {
       (gl: WebGLRenderingContext, loc: WebGLUniformLocation) => {
         gl.uniformMatrix4fv(loc, false, new Float32Array(this.gui.viewMatrix().all()));
     });
-    this.sceneRenderPass.addUniform("jTrans",
-      (gl: WebGLRenderingContext, loc: WebGLUniformLocation) => {
-        gl.uniform3fv(loc, this.scene.meshes[0].getBoneTranslations());
-    });
-    this.sceneRenderPass.addUniform("jRots",
-      (gl: WebGLRenderingContext, loc: WebGLUniformLocation) => {
-        gl.uniform4fv(loc, this.scene.meshes[0].getBoneRotations());
-    });
 
-    this.sceneRenderPass.setDrawData(this.ctx.TRIANGLES, this.scene.meshes[0].geometry.position.count, this.ctx.UNSIGNED_INT, 0);
+    // this.sceneRenderPass.setDrawData(this.ctx.TRIANGLES, this.scene.meshes[0].geometry.position.count, this.ctx.UNSIGNED_INT, 0);
+    this.sceneRenderPass.setDrawData(this.ctx.TRIANGLES, fIndices.length, this.ctx.UNSIGNED_INT, 0);
     this.sceneRenderPass.setup();
   }
  
@@ -357,10 +346,10 @@ export class SkinningAnimation extends CanvasAnimation {
    * Loads and sets the scene from a Collada file
    * @param fileLocation URI for the Collada file
    */
-  public setScene(fileLocation: string): void {
+  public setScene(fileLocation: string, iterations: number): void {
     this.loadedScene = fileLocation;
     this.scene = new CLoader(fileLocation);
-    this.scene.load(() => this.initScene());
+    this.scene.load(() => this.initScene(), iterations);
   }
 }
 
@@ -369,5 +358,5 @@ export function initializeCanvas(): void {
   /* Start drawing */
   const canvasAnimation: SkinningAnimation = new SkinningAnimation(canvas);
   canvasAnimation.start();
-  canvasAnimation.setScene("./static/assets/skinning/mapped_cube.dae");
+  canvasAnimation.setScene("./static/assets/skinning/mapped_cube.dae", 0);
 }

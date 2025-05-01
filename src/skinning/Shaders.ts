@@ -51,30 +51,17 @@ export const sceneVSText = `
 	//(should be discarded in final version of shader)
     attribute vec3 vertPosition;
 	
-    attribute vec2 aUV;
     attribute vec3 aNorm;
     attribute vec4 skinIndices;
     attribute vec4 skinWeights;
-	
-	//vertices used for bone weights (assumes up to four weights per vertex)
-    attribute vec4 v0;
-    attribute vec4 v1;
-    attribute vec4 v2;
-    attribute vec4 v3;
     
     varying vec4 lightDir;
-    varying vec2 uv;
     varying vec4 normal;
  
     uniform vec4 lightPosition;
     uniform mat4 mWorld;
     uniform mat4 mView;
     uniform mat4 mProj;
-
-	//Joint translations and rotations to determine weights (assumes up to 64 joints per rig)
-    uniform vec3 jTrans[64];
-    uniform vec4 jRots[64];
-
 
     void main () {
 	
@@ -87,8 +74,7 @@ export const sceneVSText = `
         
         vec4 aNorm4 = vec4(aNorm, 0.0);
         normal = normalize(mWorld * vec4(aNorm, 0.0));
-	
-        uv = aUV;
+
     }
 
 `;
@@ -97,7 +83,6 @@ export const sceneFSText = `
     precision mediump float;
 
     varying vec4 lightDir;
-    varying vec2 uv;
     varying vec4 normal;
 
     void main () {

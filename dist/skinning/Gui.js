@@ -1,6 +1,5 @@
 import { Camera } from "../lib/webglutils/Camera.js";
 import { Vec3 } from "../lib/TSM.js";
-import { adjacency_data, loopSubdivision } from "./Subdivision.js";
 export var Mode;
 (function (Mode) {
     Mode[Mode["playback"] = 0] = "playback";
@@ -167,41 +166,35 @@ export class GUI {
     onKeydown(key) {
         switch (key.code) {
             case "Digit1": {
-                this.animation.setScene("./static/assets/skinning/mapped_cube.dae");
-                const mesh = this.animation.getScene().meshes[0];
-                console.log("meshes: ", this.animation.getScene().meshes);
-                if (this.animation.getScene().meshes == undefined)
-                    console.log("broooooooooooooooooo");
-                const adj = new adjacency_data(mesh);
-                loopSubdivision(mesh, 1, adj);
+                this.animation.setScene("./static/assets/skinning/mapped_cube.dae", 1);
                 break;
             }
             case "Digit2": {
-                this.animation.setScene("./static/assets/skinning/long_cubes.dae");
+                this.animation.setScene("./static/assets/skinning/long_cubes.dae", 1);
                 break;
             }
             case "Digit3": {
-                this.animation.setScene("./static/assets/skinning/simple_art.dae");
+                this.animation.setScene("./static/assets/skinning/simple_art.dae", 1);
                 break;
             }
             case "Digit4": {
-                this.animation.setScene("./static/assets/skinning/mapped_cube.dae");
+                this.animation.setScene("./static/assets/skinning/mapped_cube.dae", 1);
                 break;
             }
             case "Digit5": {
-                this.animation.setScene("./static/assets/skinning/robot.dae");
+                this.animation.setScene("./static/assets/skinning/robot.dae", 1);
                 break;
             }
             case "Digit6": {
-                this.animation.setScene("./static/assets/skinning/head.dae");
+                this.animation.setScene("./static/assets/skinning/head.dae", 1);
                 break;
             }
             case "Digit7": {
-                this.animation.setScene("./static/assets/skinning/wolf.dae");
+                this.animation.setScene("./static/assets/skinning/wolf.dae", 1);
                 break;
             }
             case "Digit8": {
-                this.animation.setScene("./static/assets/skinning/cross_cubes.dae");
+                this.animation.setScene("./static/assets/skinning/cross_cubes.dae", 1);
                 break;
             }
             case "KeyW": {

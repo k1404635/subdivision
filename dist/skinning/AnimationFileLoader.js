@@ -3,6 +3,7 @@ import { Vec3 } from "../lib/tsm/Vec3.js";
 import { Mat4 } from "../lib/TSM.js";
 import { Quat } from "../lib/tsm/Quat.js";
 import { Mesh } from "../skinning/Scene.js";
+import { adjacency_data, loopSubdivision } from "./Subdivision.js";
 export class AttributeLoader {
     constructor(values, count, itemSize) {
         this.values = values;
@@ -176,7 +177,7 @@ class CLoader {
         this.skinnedMeshes = [];
         this.meshes = [];
     }
-    load(callback) {
+    load(callback, iterations) {
         this.loader.load(this.fileLocation, (collada) => {
             console.log("File loaded successfully");
             collada.scene.updateWorldMatrix(true, true);
@@ -186,6 +187,12 @@ class CLoader {
             this.skinnedMeshes.forEach(m => {
                 this.meshes.push(new Mesh(new MeshLoader(m)));
             });
+            // console.log("meshes: ", this.meshes);
+            // if(this.meshes == undefined)
+            //   console.log("broooooooooooooooooo");
+            const adj = new adjacency_data(this.meshes[0]);
+            loopSubdivision(this.meshes[0], iterations, adj);
+            // console.log("in load");
             // getting the images
             let lib = collada.library;
             let mats = lib.materials;
