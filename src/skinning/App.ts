@@ -99,7 +99,7 @@ export class SkinningAnimation extends CanvasAnimation {
    */
   public reset(): void {
       this.gui.reset();
-      this.setScene(this.loadedScene, 0);
+      this.setScene(this.loadedScene, this.gui.subdivision_iter);
   }
 
   public initGui(): void {

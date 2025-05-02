@@ -41,7 +41,7 @@ export class SkinningAnimation extends CanvasAnimation {
      */
     reset() {
         this.gui.reset();
-        this.setScene(this.loadedScene, 0);
+        this.setScene(this.loadedScene, this.gui.subdivision_iter);
     }
     initGui() {
         // Status bar background

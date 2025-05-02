@@ -165,8 +165,9 @@ export function loopSubdivision(mesh: Mesh, iterations: number, adj: adjacency_d
               const [adj1, adj2, adj3] = adj_verts_v1[i].split(',').map(Number);
               sum.add(new Vec3([adj1, adj2, adj3]));
             }
-            if(n > 3)
-              beta = 3.0 / (8.0 * n);
+            // if(n > 3)
+            //   beta = 3.0 / (8.0 * n);
+            beta = (1.0/n) * (0.625 - Math.pow((0.375 + 0.25 * Math.cos((2*Math.PI)/n)), 2));
             // new value = original point * (1-n*beta) + (sum up all points of neighboring vertices) * beta
             sum.scale(beta);
             a.scale(1 - n*beta, new_vert_v1);
@@ -190,8 +191,9 @@ export function loopSubdivision(mesh: Mesh, iterations: number, adj: adjacency_d
               const [adj1, adj2, adj3] = adj_verts_v2[i].split(',').map(Number);
               sum.add(new Vec3([adj1, adj2, adj3]));
             }
-            if(n > 3)
-              beta = 3.0 / (8.0 * n);
+            // if(n > 3)
+            //   beta = 3.0 / (8.0 * n);
+            beta = (1.0/n) * (0.625 - Math.pow((0.375 + 0.25 * Math.cos((2*Math.PI)/n)), 2));
             // new value = original point * (1-n*beta) + (sum up all points of neighboring vertices) * beta
             sum.scale(beta);
             b.scale(1 - n*beta, new_vert_v2);

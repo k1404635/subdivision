@@ -19,6 +19,7 @@ export class GUI {
     constructor(canvas, animation) {
         this.hoverX = 0;
         this.hoverY = 0;
+        this.subdivision_iter = 0;
         this.height = canvas.height;
         this.viewPortHeight = this.height - 200;
         this.width = canvas.width;
@@ -166,23 +167,28 @@ export class GUI {
     onKeydown(key) {
         switch (key.code) {
             case "Digit1": {
-                this.animation.setScene("./static/assets/skinning/mapped_cube.dae", 1);
+                this.animation.setScene("./static/assets/skinning/cross_cubes.dae", 0);
+                this.subdivision_iter = 0;
                 break;
             }
             case "Digit2": {
-                this.animation.setScene("./static/assets/skinning/long_cubes.dae", 1);
+                this.animation.setScene("./static/assets/skinning/cross_cubes.dae", 1);
+                this.subdivision_iter = 1;
                 break;
             }
             case "Digit3": {
-                this.animation.setScene("./static/assets/skinning/simple_art.dae", 1);
+                this.animation.setScene("./static/assets/skinning/cross_cubes.dae", 2);
+                this.subdivision_iter = 2;
                 break;
             }
             case "Digit4": {
-                this.animation.setScene("./static/assets/skinning/mapped_cube.dae", 1);
+                this.animation.setScene("./static/assets/skinning/cross_cubes.dae", 3);
+                this.subdivision_iter = 3;
                 break;
             }
             case "Digit5": {
-                this.animation.setScene("./static/assets/skinning/robot.dae", 1);
+                this.animation.setScene("./static/assets/skinning/cross_cubes.dae", 7);
+                this.subdivision_iter = 7;
                 break;
             }
             case "Digit6": {
