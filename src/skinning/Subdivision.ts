@@ -6,9 +6,7 @@ import { Mesh, MeshGeometry } from "./Scene.js";
 import { AttributeLoader, MeshGeometryLoader, BoneLoader, MeshLoader } from "./AnimationFileLoader.js";
 import { NormalAnimationBlendMode } from "../lib/threejs/src/constants.js";
 
-
-// Implements Loop and Catmull-Clark subdivision algorithms
-export class adjacency_data {
+export class loopsubdiv_adjacency_data {
   public faces: string[][]; // holds the indices of the 3 vertices for each face
   public verts: Map<string, Vec3>; // holds the vec3 vertex corresponding to a string of the xyz values
   public edgeFaceMap: Map<string, number[]>; // holds the edge as a key and the faces it is part of as the values in the Set
@@ -54,7 +52,9 @@ export class adjacency_data {
         this.vertexAdjMap.set(v3, [v1, v2]);
       
       this.faces.push([v1, v2, v3]);
-      const face_index = this.faces.length - 1;
+      let face_index: number = this.faces.length - 1;
+      if(i == 0)
+        face_index = 0;
 
       // make edges and set map for edge-face relations
       let edge1: string = v1 + '=>' + v2;
@@ -106,28 +106,156 @@ export class adjacency_data {
         this.faceEdgeMap.set(face_index, [edge1, edge2, edge3]);
     }
 
-    this.removeDuplicatesFromMaps();
-  }
-
-  public removeDuplicatesFromMaps(): void {
-    for (const [key, value] of this.vertexAdjMap.entries()) {
-      const unique = Array.from(new Set(value));
-      this.vertexAdjMap.set(key, unique);
-    }
-  
-    for (const [key, value] of this.faceEdgeMap.entries()) {
-      const unique = Array.from(new Set(value));
-      this.faceEdgeMap.set(key, unique);
-    }
-  
-    for (const [key, value] of this.edgeFaceMap.entries()) {
-      const unique = Array.from(new Set(value));
-      this.edgeFaceMap.set(key, unique);
-    }
+    removeDuplicatesFromMaps(this.vertexAdjMap, this.faceEdgeMap, this.edgeFaceMap);
   }
 }
 
-function loopSubdivision_newVerts(adj: adjacency_data, new_verts: Map<string, Vec3>, oldedge_vertMap: Map<string, string>,
+export class catmullclark_adjacency_data {
+  public faces: string[][]; // holds the indices of the 4 vertices for each face
+  public verts: Map<string, Vec3>; // holds the vec3 vertex corresponding to a string of the xyz values
+  public edgeFaceMap: Map<string, number[]>; // holds the edge as a key and the faces it is part of as the values in the Set
+  public vertexAdjMap: Map<string, string[]>; // holds each vertex's neighboring vertices
+  public faceEdgeMap: Map<number, string[]>; // holds the face index as a key and the edges on that face as the values in the Set
+
+  constructor(mesh: Mesh) {
+    const positions = mesh.geometry.position.values;
+    this.vertexAdjMap = new Map<string, string[]>();
+    this.verts = new Map<string, Vec3>();
+    this.edgeFaceMap = new Map<string, number[]>();
+    this.faceEdgeMap = new Map<number, string[]>();
+    this.faces = [];
+
+    for(let i = 0; i < positions.length; i += 12) {
+      const v1 = `${positions[i]},${positions[i+1]},${positions[i+2]}`;
+      const v2 = `${positions[i+3]},${positions[i+4]},${positions[i+5]}`;
+      const v3 = `${positions[i+6]},${positions[i+7]},${positions[i+8]}`;
+      const v4 = `${positions[i+9]},${positions[i+10]},${positions[i+11]}`;
+      this.verts.set(v1, new Vec3([positions[i], positions[i+1], positions[i+2]]));
+      this.verts.set(v2, new Vec3([positions[i+3], positions[i+4], positions[i+5]]));
+      this.verts.set(v3, new Vec3([positions[i+6], positions[i+7], positions[i+8]]));
+      this.verts.set(v4, new Vec3([positions[i+9], positions[i+10], positions[i+11]]));
+      
+      // vertex adjacency
+      let val: string[] | undefined = this.vertexAdjMap.get(v1);
+      if(val != undefined) {
+        val.push(v2);
+        val.push(v4);
+      } else
+        this.vertexAdjMap.set(v1, [v2, v4]);
+
+      val = this.vertexAdjMap.get(v2);
+      if(val != undefined) {
+        val.push(v1);
+        val.push(v3);
+      } else
+        this.vertexAdjMap.set(v2, [v1, v3]);
+
+      val = this.vertexAdjMap.get(v3);
+      if(val != undefined) {
+        val.push(v2);
+        val.push(v4);
+      } else
+        this.vertexAdjMap.set(v3, [v2, v4]);
+
+      val = this.vertexAdjMap.get(v4);
+      if(val != undefined) {
+        val.push(v1);
+        val.push(v3);
+      } else
+        this.vertexAdjMap.set(v4, [v1, v3]);
+      
+      this.faces.push([v1, v2, v3, v4]);
+      let face_index: number = this.faces.length - 1;
+      if(i == 0)
+        face_index = 0;
+
+      // make edges and set map for edge-face relations
+      let edge1: string = v1 + '=>' + v2;
+      let edge2: string = v2 + '=>' + v3;
+      let edge3: string = v3 + '=>' + v4;
+      let edge4: string = v4 + '=>' + v1;
+      let edgeVal: number[] | undefined = this.edgeFaceMap.get(edge1);
+      if(edgeVal == undefined) {
+        edge1 = v2 + '=>' + v1;
+        edgeVal = this.edgeFaceMap.get(edge1);
+        if(edgeVal == undefined)
+          this.edgeFaceMap.set(edge1, [face_index]);
+        else
+          edgeVal.push(face_index);
+      }
+      else
+        edgeVal.push(face_index);
+
+      edgeVal = this.edgeFaceMap.get(edge2);
+      if(edgeVal == undefined) {
+        edge2 = v3 + '=>' + v2;
+        edgeVal = this.edgeFaceMap.get(edge2);
+        if(edgeVal == undefined)
+          this.edgeFaceMap.set(edge2, [face_index]);
+        else
+          edgeVal.push(face_index);
+      }
+      else
+        edgeVal.push(face_index);
+
+      edgeVal = this.edgeFaceMap.get(edge3);
+      if(edgeVal == undefined) {
+        edge3 = v4 + '=>' + v3;
+        edgeVal = this.edgeFaceMap.get(edge3);
+        if(edgeVal == undefined)
+          this.edgeFaceMap.set(edge3, [face_index]);
+        else
+          edgeVal.push(face_index);
+      }
+      else
+        edgeVal.push(face_index);
+
+      edgeVal = this.edgeFaceMap.get(edge4);
+      if(edgeVal == undefined) {
+        edge4 = v1 + '=>' + v4;
+        edgeVal = this.edgeFaceMap.get(edge4);
+        if(edgeVal == undefined)
+          this.edgeFaceMap.set(edge4, [face_index]);
+        else
+          edgeVal.push(face_index);
+      }
+      else
+        edgeVal.push(face_index);
+
+      // make faceEdgeMap
+      let face_edges: string[] | undefined = this.faceEdgeMap.get(face_index);
+      if(face_edges != undefined) {
+        face_edges.push(edge1);
+        face_edges.push(edge2);
+        face_edges.push(edge3);
+        face_edges.push(edge4);
+      } else
+        this.faceEdgeMap.set(face_index, [edge1, edge2, edge3, edge4]);
+    }
+
+    removeDuplicatesFromMaps(this.vertexAdjMap, this.faceEdgeMap, this.edgeFaceMap);
+  }
+}
+
+function removeDuplicatesFromMaps(vertexAdjMap: Map<string, string[]>, faceEdgeMap: Map<number, string[]>, 
+                                    edgeFaceMap: Map<string, number[]>): void {
+  for (const [key, value] of vertexAdjMap.entries()) {
+    const unique = Array.from(new Set(value));
+    vertexAdjMap.set(key, unique);
+  }
+
+  for (const [key, value] of faceEdgeMap.entries()) {
+    const unique = Array.from(new Set(value));
+    faceEdgeMap.set(key, unique);
+  }
+
+  for (const [key, value] of edgeFaceMap.entries()) {
+    const unique = Array.from(new Set(value));
+    edgeFaceMap.set(key, unique);
+  }
+}
+
+function loopSubdivision_newVerts(adj: loopsubdiv_adjacency_data, new_verts: Map<string, Vec3>, oldedge_vertMap: Map<string, string>,
                                     oldvert_newvert: Map<string, Vec3>): void {
   let beta: number = 3.0/16.0; // default assumes n = 3, n = # of neighboring vertices
   // let first: boolean = true; // here just to mark first edge as sharp edge////////////////////////////////////////////////////////////
@@ -148,8 +276,6 @@ function loopSubdivision_newVerts(adj: adjacency_data, new_verts: Map<string, Ve
             const [adj1, adj2, adj3] = adj_verts_v1[i].split(',').map(Number);
             sum.add(new Vec3([adj1, adj2, adj3]));
           }
-          // if(n > 3)
-          //   beta = 3.0 / (8.0 * n);
           beta = (1.0/n) * (0.625 - Math.pow((0.375 + 0.25 * Math.cos((2*Math.PI)/n)), 2));
           // new value = original point * (1-n*beta) + (sum up all points of neighboring vertices) * beta
           sum.scale(beta);
@@ -170,8 +296,6 @@ function loopSubdivision_newVerts(adj: adjacency_data, new_verts: Map<string, Ve
             const [adj1, adj2, adj3] = adj_verts_v2[i].split(',').map(Number);
             sum.add(new Vec3([adj1, adj2, adj3]));
           }
-          // if(n > 3)
-          //   beta = 3.0 / (8.0 * n);
           beta = (1.0/n) * (0.625 - Math.pow((0.375 + 0.25 * Math.cos((2*Math.PI)/n)), 2));
           // new value = original point * (1-n*beta) + (sum up all points of neighboring vertices) * beta
           sum.scale(beta);
@@ -296,7 +420,7 @@ function loopsubdiv_add_adjacent_verts(new_vert1: Vec3, new_vert2: string, new_v
   new_vertexAdjMap.set(new_vert2, 
                         [new_vert3, 
                           `${new_vert1.x},${new_vert1.y},${new_vert1.z}`]);
-}
+  }
 }
 
 function loopsubdiv_get_newEdgeVerts_oldVerts(edges: string[], oldedge_vertMap: Map<string, string>): [string|undefined, string|undefined, string|undefined, string, string, string] {
@@ -335,7 +459,7 @@ function loopsubdiv_get_newEdgeVerts_oldVerts(edges: string[], oldedge_vertMap: 
 }
 
 // for the sake of the demo and testing, we will say that the first edge in the edgeFaceMap is a sharp crease
-export function loopSubdivision(mesh: Mesh, iterations: number, adj: adjacency_data): void {
+export function loopSubdivision(mesh: Mesh, iterations: number, adj: loopsubdiv_adjacency_data): void {
   for(let iter = 0; iter < iterations; iter++)
   {
     let new_verts: Map<string, Vec3> = new Map<string, Vec3>(); 
@@ -594,11 +718,11 @@ export function loopSubdivision(mesh: Mesh, iterations: number, adj: adjacency_d
     adj.vertexAdjMap = new_vertexAdjMap;
     adj.verts = new_verts;
   }
-  remake_mesh_positions(adj, mesh);
+  loopsubdiv_remake_mesh_positions(adj, mesh);
 }
 
 // assuming each face already has vertices in counterclockwise order
-function remake_mesh_positions(adj: adjacency_data, mesh: Mesh): void {
+function loopsubdiv_remake_mesh_positions(adj: loopsubdiv_adjacency_data, mesh: Mesh): void {
   let new_positions: number[] = [];
   let new_normals: number[] = [];
   for(let f = 0; f < adj.faces.length; f++) {
@@ -640,10 +764,8 @@ function remake_mesh_positions(adj: adjacency_data, mesh: Mesh): void {
   mesh.geometry.normal.count = new_normals.length / 3;
 }
 
-export function catmullClarkSubdivision(mesh: Mesh, iterations: number): void {
-  /*
-    Make a separate adjacency_data class for quad meshes (basically the same as the other one but with one more point)
-    
+export function catmullClarkSubdivision(mesh: Mesh, iterations: number, adj: catmullclark_adjacency_data): void {
+  /*   
     Compute Face points:
     - for each face, compute the face point (facepoint = average of 4 vertices of quad)
 

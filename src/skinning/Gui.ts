@@ -4,7 +4,6 @@ import { SkinningAnimation } from "./App.js";
 import { Mat4, Vec3, Vec4, Vec2, Mat2, Quat } from "../lib/TSM.js";
 import { Bone, Mesh } from "./Scene.js";
 import { RenderPass } from "../lib/webglutils/RenderPass.js";
-import { adjacency_data, loopSubdivision } from "./Subdivision.js";
 
 /**
  * Might be useful for designing any animation GUI

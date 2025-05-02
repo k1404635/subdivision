@@ -1,7 +1,5 @@
 import { Mat4, Quat, Vec3 } from "../lib/TSM.js";
 import { AttributeLoader, MeshGeometryLoader, BoneLoader, MeshLoader } from "./AnimationFileLoader.js";
-import { adjacency_data } from "./Subdivision.js";
-
 
 //TODO: Generate cylinder geometry for highlighting bones
 

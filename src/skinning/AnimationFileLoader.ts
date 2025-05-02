@@ -4,7 +4,7 @@ import { Vec3 } from "../lib/tsm/Vec3.js";
 import { Mat4, Vec4 } from "../lib/TSM.js";
 import { Quat } from "../lib/tsm/Quat.js";
 import { Mesh } from "../skinning/Scene.js";
-import { adjacency_data, loopSubdivision } from "./Subdivision.js";
+import { loopsubdiv_adjacency_data, loopSubdivision, catmullclark_adjacency_data, catmullClarkSubdivision } from "./Subdivision.js";
 
 export class AttributeLoader {
   values: Float32Array;
@@ -246,8 +246,10 @@ class CLoader {
         this.meshes.push(new Mesh(new MeshLoader(m)));
       });
 
-      const adj = new adjacency_data(this.meshes[0]);
-      loopSubdivision(this.meshes[0], iterations, adj);     
+      const adj = new loopsubdiv_adjacency_data(this.meshes[0]);
+      loopSubdivision(this.meshes[0], iterations, adj); 
+      // const adj2 = new catmullclark_adjacency_data(this.meshes[0]);
+      // catmullClarkSubdivision(this.meshes[0], iterations, adj2);    
 
       // getting the images
       let lib = collada.library as any;
