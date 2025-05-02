@@ -142,24 +142,4 @@ export const sBackFSText = `
     }
 
 `;
-export const linesVSText = `
-    precision mediump float;
-
-    attribute vec3 vertPosition;
-  
-    uniform mat4 uWorld;
-    uniform mat4 uView;
-    uniform mat4 uProj;
-
-    void main () {
-        gl_Position = uProj * uView * uWorld * vec4(vertPosition, 1.0);
-    }
-`;
-export const linesFSText = `
-    precision mediump float;
-
-    void main() {
-        gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
-    }
-`;
 //# sourceMappingURL=Shaders.js.map

@@ -2,7 +2,7 @@ import { Debugger } from "../lib/webglutils/Debugging.js";
 import { CanvasAnimation } from "../lib/webglutils/CanvasAnimation.js";
 import { Floor } from "../lib/webglutils/Floor.js";
 import { GUI } from "./Gui.js";
-import { sceneFSText, sceneVSText, floorFSText, floorVSText, skeletonFSText, skeletonVSText, sBackVSText, sBackFSText, linesVSText, linesFSText, } from "./Shaders.js";
+import { sceneFSText, sceneVSText, floorFSText, floorVSText, skeletonFSText, skeletonVSText, sBackVSText, sBackFSText } from "./Shaders.js";
 import { Mat4, Vec4 } from "../lib/TSM.js";
 import { CLoader } from "./AnimationFileLoader.js";
 import { RenderPass } from "../lib/webglutils/RenderPass.js";
@@ -21,7 +21,6 @@ export class SkinningAnimation extends CanvasAnimation {
         this.floorRenderPass = new RenderPass(this.extVAO, gl, floorVSText, floorFSText);
         this.sceneRenderPass = new RenderPass(this.extVAO, gl, sceneVSText, sceneFSText);
         this.skeletonRenderPass = new RenderPass(this.extVAO, gl, skeletonVSText, skeletonFSText);
-        this.linesRenderPass = new RenderPass(this.extVAO, gl, linesVSText, linesFSText);
         //TODO: Add in other rendering initializations for other shaders such as bone highlighting
         this.gui = new GUI(this.canvas2d, this);
         this.lightPosition = new Vec4([-10, 10, -10, 1]);
@@ -41,7 +40,7 @@ export class SkinningAnimation extends CanvasAnimation {
      */
     reset() {
         this.gui.reset();
-        this.setScene(this.loadedScene, this.gui.subdivision_iter);
+        this.setScene(this.loadedScene);
     }
     initGui() {
         // Status bar background
@@ -56,9 +55,7 @@ export class SkinningAnimation extends CanvasAnimation {
             return;
         }
         this.initModel();
-        // console.log("init model");
         this.initSkeleton();
-        this.initLines();
         this.gui.reset();
     }
     /**
@@ -74,8 +71,6 @@ export class SkinningAnimation extends CanvasAnimation {
             fIndices[i + 2] = i + 2;
         }
         this.sceneRenderPass.setIndexBufferData(fIndices);
-        // console.log("norms: ", this.scene.meshes[0].geometry.normal.values);
-        // console.log("afsdfa: ", this.scene.meshes[0].geometry.normal.values.length / 3 >= this.scene.meshes[0].geometry.normal.count * 3)
         //vertPosition is a placeholder value until skinning is in place
         this.sceneRenderPass.addAttribute("vertPosition", 3, this.ctx.FLOAT, false, 3 * Float32Array.BYTES_PER_ELEMENT, 0, undefined, this.scene.meshes[0].geometry.position.values);
         this.sceneRenderPass.addAttribute("aNorm", 3, this.ctx.FLOAT, false, 3 * Float32Array.BYTES_PER_ELEMENT, 0, undefined, this.scene.meshes[0].geometry.normal.values);
@@ -91,8 +86,11 @@ export class SkinningAnimation extends CanvasAnimation {
         this.sceneRenderPass.addUniform("mView", (gl, loc) => {
             gl.uniformMatrix4fv(loc, false, new Float32Array(this.gui.viewMatrix().all()));
         });
-        // this.sceneRenderPass.setDrawData(this.ctx.TRIANGLES, this.scene.meshes[0].geometry.position.count, this.ctx.UNSIGNED_INT, 0);
-        this.sceneRenderPass.setDrawData(this.ctx.TRIANGLES, fIndices.length, this.ctx.UNSIGNED_INT, 0);
+        if (!this.gui.quadmesh)
+            this.sceneRenderPass.setDrawData(this.ctx.TRIANGLES, fIndices.length, this.ctx.UNSIGNED_INT, 0);
+        else {
+            // triangulate quads
+        }
         this.sceneRenderPass.setup();
     }
     /**
@@ -119,25 +117,6 @@ export class SkinningAnimation extends CanvasAnimation {
         });
         this.skeletonRenderPass.setDrawData(this.ctx.LINES, this.scene.meshes[0].getBoneIndices().length, this.ctx.UNSIGNED_INT, 0);
         this.skeletonRenderPass.setup();
-    }
-    initLines() {
-        let gl = this.ctx;
-        this.linesRenderPass = new RenderPass(this.extVAO, gl, linesVSText, linesFSText);
-        this.linesRenderPass.addUniform("uWorld", (gl, loc) => {
-            gl.uniformMatrix4fv(loc, false, new Float32Array(Mat4.identity.all()));
-        });
-        this.linesRenderPass.addUniform("uProj", (gl, loc) => {
-            gl.uniformMatrix4fv(loc, false, new Float32Array(this.gui.projMatrix().all()));
-        });
-        this.linesRenderPass.addUniform("uView", (gl, loc) => {
-            gl.uniformMatrix4fv(loc, false, new Float32Array(this.gui.viewMatrix().all()));
-        });
-        let verts = new Float32Array([0.0, 0.0, 0.0, 1.0, 1.0, 1.0]);
-        // let verts = new Float32Array([-100.0, 0.0, -100.0, 100.0, 0.0, 100.0]);
-        this.linesRenderPass.setIndexBufferData(new Uint32Array([0, 1]));
-        this.linesRenderPass.addAttribute("vertPosition", 3, this.ctx.FLOAT, false, 3 * Float32Array.BYTES_PER_ELEMENT, 0, undefined, verts);
-        this.linesRenderPass.setDrawData(this.ctx.LINES, 2, this.ctx.UNSIGNED_INT, 0);
-        this.linesRenderPass.setup();
     }
     //TODO: Set up a Render Pass for the bone highlighting
     /**
@@ -222,10 +201,10 @@ export class SkinningAnimation extends CanvasAnimation {
      * Loads and sets the scene from a Collada file
      * @param fileLocation URI for the Collada file
      */
-    setScene(fileLocation, iterations) {
+    setScene(fileLocation) {
         this.loadedScene = fileLocation;
         this.scene = new CLoader(fileLocation);
-        this.scene.load(() => this.initScene(), iterations);
+        this.scene.load(() => this.initScene(), this.gui.subdivision_iter);
     }
 }
 export function initializeCanvas() {
@@ -233,6 +212,6 @@ export function initializeCanvas() {
     /* Start drawing */
     const canvasAnimation = new SkinningAnimation(canvas);
     canvasAnimation.start();
-    canvasAnimation.setScene("./static/assets/skinning/mapped_cube.dae", 0);
+    canvasAnimation.setScene("./static/assets/skinning/mapped_cube.dae");
 }
 //# sourceMappingURL=App.js.map

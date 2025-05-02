@@ -103,6 +103,195 @@ export class adjacency_data {
         }
     }
 }
+function loopSubdivision_newVerts(adj, new_verts, oldedge_vertMap, oldvert_newvert) {
+    let beta = 3.0 / 16.0; // default assumes n = 3, n = # of neighboring vertices
+    // let first: boolean = true; // here just to mark first edge as sharp edge////////////////////////////////////////////////////////////
+    let first = false;
+    for (const [edge, faces] of adj.edgeFaceMap.entries()) {
+        const [v1, v2] = edge.split('=>');
+        const a = adj.verts.get(v1);
+        const b = adj.verts.get(v2);
+        if (faces.length == 2 && !first) { // interior edge (vertices on edge are also interior)
+            // compute even (new) vertices
+            if (a != undefined) {
+                let new_vert_v1 = new Vec3();
+                const adj_verts_v1 = adj.vertexAdjMap.get(v1);
+                if (adj_verts_v1 != undefined) {
+                    const n = adj_verts_v1.length;
+                    let sum = new Vec3();
+                    for (let i = 0; i < n; i++) {
+                        const [adj1, adj2, adj3] = adj_verts_v1[i].split(',').map(Number);
+                        sum.add(new Vec3([adj1, adj2, adj3]));
+                    }
+                    // if(n > 3)
+                    //   beta = 3.0 / (8.0 * n);
+                    beta = (1.0 / n) * (0.625 - Math.pow((0.375 + 0.25 * Math.cos((2 * Math.PI) / n)), 2));
+                    // new value = original point * (1-n*beta) + (sum up all points of neighboring vertices) * beta
+                    sum.scale(beta);
+                    a.scale(1 - n * beta, new_vert_v1);
+                    new_vert_v1.add(sum);
+                    oldvert_newvert.set(v1, new_vert_v1);
+                    new_verts.set(`${new_vert_v1.x},${new_vert_v1.y},${new_vert_v1.z}`, new_vert_v1);
+                }
+            }
+            if (b != undefined) {
+                let new_vert_v2 = new Vec3();
+                const adj_verts_v2 = adj.vertexAdjMap.get(v2);
+                if (adj_verts_v2 != undefined) {
+                    const n = adj_verts_v2.length;
+                    let sum = new Vec3();
+                    for (let i = 0; i < n; i++) {
+                        const [adj1, adj2, adj3] = adj_verts_v2[i].split(',').map(Number);
+                        sum.add(new Vec3([adj1, adj2, adj3]));
+                    }
+                    // if(n > 3)
+                    //   beta = 3.0 / (8.0 * n);
+                    beta = (1.0 / n) * (0.625 - Math.pow((0.375 + 0.25 * Math.cos((2 * Math.PI) / n)), 2));
+                    // new value = original point * (1-n*beta) + (sum up all points of neighboring vertices) * beta
+                    sum.scale(beta);
+                    b.scale(1 - n * beta, new_vert_v2);
+                    new_vert_v2.add(sum);
+                    oldvert_newvert.set(v2, new_vert_v2);
+                    new_verts.set(`${new_vert_v2.x},${new_vert_v2.y},${new_vert_v2.z}`, new_vert_v2);
+                }
+            }
+            // compute odd (old) vertices
+            // get c
+            const edges_on_face1 = adj.faceEdgeMap.get(faces[0]);
+            let string_c = '';
+            if (edges_on_face1 != undefined) {
+                for (let i = 0; i < 3; i++) {
+                    const curr_edge = edges_on_face1[i];
+                    if (curr_edge == edge)
+                        continue;
+                    const [curr_v1, curr_v2] = curr_edge.split('=>');
+                    if (curr_v1 == v1 || curr_v1 == v2)
+                        string_c = curr_v2;
+                    else if (curr_v2 == v1 || curr_v2 == v2)
+                        string_c = curr_v1;
+                }
+            }
+            const c = adj.verts.get(string_c);
+            // get d
+            const edges_on_face2 = adj.faceEdgeMap.get(faces[1]);
+            let string_d = '';
+            if (edges_on_face2 != undefined) {
+                for (let i = 0; i < 3; i++) {
+                    const curr_edge = edges_on_face2[i];
+                    if (curr_edge == edge)
+                        continue;
+                    const [curr_v1, curr_v2] = curr_edge.split('=>');
+                    if (curr_v1 == v1 || curr_v1 == v2)
+                        string_d = curr_v2;
+                    else if (curr_v2 == v1 || curr_v2 == v2)
+                        string_d = curr_v1;
+                }
+            }
+            const d = adj.verts.get(string_d);
+            let new_vert = new Vec3();
+            if (a != undefined && b != undefined && c != undefined && d != undefined) {
+                // 0.375 * (a+b) + 0.125 * (c+d)
+                a.add(b, new_vert);
+                new_vert.scale(0.375);
+                let temp_cd = new Vec3();
+                c.add(d, temp_cd);
+                temp_cd.scale(0.125);
+                new_vert.add(temp_cd);
+                new_verts.set(`${new_vert.x},${new_vert.y},${new_vert.z}`, new_vert);
+                oldedge_vertMap.set(edge, `${new_vert.x},${new_vert.y},${new_vert.z}`);
+            }
+        }
+        else { // boundary or sharp edge
+            first = false;
+            if (a != undefined && b != undefined) {
+                // compute even (old) vertices
+                // new value = 0.125 * (a+b) + 0.75 * original point
+                let new_vert_v1 = new Vec3();
+                a.add(b, new_vert_v1);
+                new_vert_v1.scale(0.125);
+                let temp = new Vec3();
+                a.scale(0.75, temp);
+                new_vert_v1.add(temp);
+                let new_vert_v2 = new Vec3();
+                a.add(b, new_vert_v2);
+                new_vert_v2.scale(0.125);
+                temp = new Vec3();
+                b.scale(0.75, temp);
+                new_vert_v2.add(temp);
+                oldvert_newvert.set(v1, new_vert_v1);
+                oldvert_newvert.set(v2, new_vert_v2);
+                new_verts.set(`${new_vert_v1.x},${new_vert_v1.y},${new_vert_v1.z}`, new_vert_v1);
+                new_verts.set(`${new_vert_v2.x},${new_vert_v2.y},${new_vert_v2.z}`, new_vert_v2);
+                // compute odd (new) vertices
+                // 0.5 * (a+b)
+                let new_vert = new Vec3();
+                a.add(b, new_vert);
+                new_vert.scale(0.5);
+                new_verts.set(`${new_vert.x},${new_vert.y},${new_vert.z}`, new_vert);
+                oldedge_vertMap.set(edge, `${new_vert.x},${new_vert.y},${new_vert.z}`);
+            }
+        }
+    }
+}
+function loopsubdiv_add_adjacent_verts(new_vert1, new_vert2, new_vert3, new_vertexAdjMap) {
+    let temp_adjverts = new_vertexAdjMap.get(`${new_vert1.x},${new_vert1.y},${new_vert1.z}`);
+    if (temp_adjverts != undefined) {
+        temp_adjverts.push(new_vert2);
+        temp_adjverts.push(new_vert3);
+    }
+    else {
+        new_vertexAdjMap.set(`${new_vert1.x},${new_vert1.y},${new_vert1.z}`, [new_vert2,
+            new_vert3]);
+    }
+    temp_adjverts = new_vertexAdjMap.get(new_vert3);
+    if (temp_adjverts != undefined) {
+        temp_adjverts.push(new_vert2);
+        temp_adjverts.push(`${new_vert1.x},${new_vert1.y},${new_vert1.z}`);
+    }
+    else {
+        new_vertexAdjMap.set(new_vert3, [new_vert2,
+            `${new_vert1.x},${new_vert1.y},${new_vert1.z}`]);
+    }
+    temp_adjverts = new_vertexAdjMap.get(new_vert2);
+    if (temp_adjverts != undefined) {
+        temp_adjverts.push(new_vert3);
+        temp_adjverts.push(`${new_vert1.x},${new_vert1.y},${new_vert1.z}`);
+    }
+    else {
+        new_vertexAdjMap.set(new_vert2, [new_vert3,
+            `${new_vert1.x},${new_vert1.y},${new_vert1.z}`]);
+    }
+}
+function loopsubdiv_get_newEdgeVerts_oldVerts(edges, oldedge_vertMap) {
+    const edge1 = edges[0];
+    const [e1v1, e1v2] = edge1.split('=>');
+    const new_e1_vert = oldedge_vertMap.get(edge1);
+    const edge2 = edges[1];
+    const [e2v1, e2v2] = edge2.split('=>');
+    const new_e2_vert = oldedge_vertMap.get(edge2);
+    const edge3 = edges[2];
+    const [e3v1, e3v2] = edge3.split('=>');
+    const new_e3_vert = oldedge_vertMap.get(edge3);
+    // vertex between edge1 and edge2
+    let old_vert_a = '';
+    if (e1v1 == e2v1 || e1v1 == e2v2)
+        old_vert_a = e1v1;
+    else if (e1v2 == e2v1 || e1v2 == e2v2)
+        old_vert_a = e1v2;
+    // vertex between edge3 and edge1
+    let old_vert_b = '';
+    if (e3v1 == e1v1 || e3v1 == e1v2)
+        old_vert_b = e3v1;
+    else if (e3v2 == e1v1 || e3v2 == e1v2)
+        old_vert_b = e3v2;
+    // vertex between edge2 and edge3
+    let old_vert_c = '';
+    if (e2v1 == e3v1 || e2v1 == e3v2)
+        old_vert_c = e2v1;
+    else if (e2v2 == e3v1 || e2v2 == e3v2)
+        old_vert_c = e2v2;
+    return [new_e1_vert, new_e2_vert, new_e3_vert, old_vert_a, old_vert_b, old_vert_c];
+}
 // for the sake of the demo and testing, we will say that the first edge in the edgeFaceMap is a sharp crease
 export function loopSubdivision(mesh, iterations, adj) {
     for (let iter = 0; iter < iterations; iter++) {
@@ -113,166 +302,39 @@ export function loopSubdivision(mesh, iterations, adj) {
         let new_edgeFaceMap = new Map();
         let new_vertexAdjMap = new Map();
         let new_faceEdgeMap = new Map();
-        let beta = 3.0 / 16.0; // default assumes n = 3, n = # of neighboring vertices
-        let first = true; // here just to mark first edge as sharp edge////////////////////////////////////////////////////////////
-        // let first: boolean = false;
-        for (const [edge, faces] of adj.edgeFaceMap.entries()) {
-            const [v1, v2] = edge.split('=>');
-            const a = adj.verts.get(v1);
-            const b = adj.verts.get(v2);
-            if (faces.length == 2 && !first) { // interior edge (vertices on edge are also interior)
-                // compute even (new) vertices
-                if (a != undefined) {
-                    let new_vert_v1 = new Vec3();
-                    const adj_verts_v1 = adj.vertexAdjMap.get(v1);
-                    if (adj_verts_v1 != undefined) {
-                        const n = adj_verts_v1.length;
-                        let sum = new Vec3();
-                        for (let i = 0; i < n; i++) {
-                            const [adj1, adj2, adj3] = adj_verts_v1[i].split(',').map(Number);
-                            sum.add(new Vec3([adj1, adj2, adj3]));
-                        }
-                        // if(n > 3)
-                        //   beta = 3.0 / (8.0 * n);
-                        beta = (1.0 / n) * (0.625 - Math.pow((0.375 + 0.25 * Math.cos((2 * Math.PI) / n)), 2));
-                        // new value = original point * (1-n*beta) + (sum up all points of neighboring vertices) * beta
-                        sum.scale(beta);
-                        a.scale(1 - n * beta, new_vert_v1);
-                        new_vert_v1.add(sum);
-                        oldvert_newvert.set(v1, new_vert_v1);
-                        new_verts.set(`${new_vert_v1.x},${new_vert_v1.y},${new_vert_v1.z}`, new_vert_v1);
-                    }
-                }
-                if (b != undefined) {
-                    let new_vert_v2 = new Vec3();
-                    const adj_verts_v2 = adj.vertexAdjMap.get(v2);
-                    if (adj_verts_v2 != undefined) {
-                        const n = adj_verts_v2.length;
-                        let sum = new Vec3();
-                        for (let i = 0; i < n; i++) {
-                            const [adj1, adj2, adj3] = adj_verts_v2[i].split(',').map(Number);
-                            sum.add(new Vec3([adj1, adj2, adj3]));
-                        }
-                        // if(n > 3)
-                        //   beta = 3.0 / (8.0 * n);
-                        beta = (1.0 / n) * (0.625 - Math.pow((0.375 + 0.25 * Math.cos((2 * Math.PI) / n)), 2));
-                        // new value = original point * (1-n*beta) + (sum up all points of neighboring vertices) * beta
-                        sum.scale(beta);
-                        b.scale(1 - n * beta, new_vert_v2);
-                        new_vert_v2.add(sum);
-                        oldvert_newvert.set(v2, new_vert_v2);
-                        new_verts.set(`${new_vert_v2.x},${new_vert_v2.y},${new_vert_v2.z}`, new_vert_v2);
-                    }
-                }
-                // compute odd (old) vertices
-                // get c
-                const edges_on_face1 = adj.faceEdgeMap.get(faces[0]);
-                let string_c = '';
-                if (edges_on_face1 != undefined) {
-                    for (let i = 0; i < 3; i++) {
-                        const curr_edge = edges_on_face1[i];
-                        if (curr_edge == edge)
-                            continue;
-                        const [curr_v1, curr_v2] = curr_edge.split('=>');
-                        if (curr_v1 == v1 || curr_v1 == v2)
-                            string_c = curr_v2;
-                        else if (curr_v2 == v1 || curr_v2 == v2)
-                            string_c = curr_v1;
-                    }
-                }
-                const c = adj.verts.get(string_c);
-                // get d
-                const edges_on_face2 = adj.faceEdgeMap.get(faces[1]);
-                let string_d = '';
-                if (edges_on_face2 != undefined) {
-                    for (let i = 0; i < 3; i++) {
-                        const curr_edge = edges_on_face2[i];
-                        if (curr_edge == edge)
-                            continue;
-                        const [curr_v1, curr_v2] = curr_edge.split('=>');
-                        if (curr_v1 == v1 || curr_v1 == v2)
-                            string_d = curr_v2;
-                        else if (curr_v2 == v1 || curr_v2 == v2)
-                            string_d = curr_v1;
-                    }
-                }
-                const d = adj.verts.get(string_d);
-                let new_vert = new Vec3();
-                if (a != undefined && b != undefined && c != undefined && d != undefined) {
-                    // 0.375 * (a+b) + 0.125 * (c+d)
-                    a.add(b, new_vert);
-                    new_vert.scale(0.375);
-                    let temp_cd = new Vec3();
-                    c.add(d, temp_cd);
-                    temp_cd.scale(0.125);
-                    new_vert.add(temp_cd);
-                    new_verts.set(`${new_vert.x},${new_vert.y},${new_vert.z}`, new_vert);
-                    oldedge_vertMap.set(edge, `${new_vert.x},${new_vert.y},${new_vert.z}`);
-                }
-            }
-            else { // boundary or sharp edge
-                first = false;
-                console.log("boundaryyy");
-                if (a != undefined && b != undefined) {
-                    // compute even (old) vertices
-                    // new value = 0.125 * (a+b) + 0.75 * original point
-                    let new_vert_v1 = new Vec3();
-                    a.add(b, new_vert_v1);
-                    new_vert_v1.scale(0.125);
-                    let temp = new Vec3();
-                    a.scale(0.75, temp);
-                    new_vert_v1.add(temp);
-                    let new_vert_v2 = new Vec3();
-                    a.add(b, new_vert_v2);
-                    new_vert_v2.scale(0.125);
-                    temp = new Vec3();
-                    b.scale(0.75, temp);
-                    new_vert_v2.add(temp);
-                    oldvert_newvert.set(v1, new_vert_v1);
-                    oldvert_newvert.set(v2, new_vert_v2);
-                    new_verts.set(`${new_vert_v1.x},${new_vert_v1.y},${new_vert_v1.z}`, new_vert_v1);
-                    new_verts.set(`${new_vert_v2.x},${new_vert_v2.y},${new_vert_v2.z}`, new_vert_v2);
-                    // compute odd (new) vertices
-                    // 0.5 * (a+b)
-                    let new_vert = new Vec3();
-                    a.add(b, new_vert);
-                    new_vert.scale(0.5);
-                    new_verts.set(`${new_vert.x},${new_vert.y},${new_vert.z}`, new_vert);
-                    oldedge_vertMap.set(edge, `${new_vert.x},${new_vert.y},${new_vert.z}`);
-                }
-            }
-        }
+        loopSubdivision_newVerts(adj, new_verts, oldedge_vertMap, oldvert_newvert);
         let curr_face_index = 0;
         for (let f = 0; f < adj.faces.length; f++) {
             const edges = adj.faceEdgeMap.get(f);
             if (edges != undefined) {
-                const edge1 = edges[0];
-                const [e1v1, e1v2] = edge1.split('=>');
-                const new_e1_vert = oldedge_vertMap.get(edge1);
-                const edge2 = edges[1];
-                const [e2v1, e2v2] = edge2.split('=>');
-                const new_e2_vert = oldedge_vertMap.get(edge2);
-                const edge3 = edges[2];
-                const [e3v1, e3v2] = edge3.split('=>');
-                const new_e3_vert = oldedge_vertMap.get(edge3);
-                // vertex between edge1 and edge2
-                let old_vert_a = '';
-                if (e1v1 == e2v1 || e1v1 == e2v2)
-                    old_vert_a = e1v1;
-                else if (e1v2 == e2v1 || e1v2 == e2v2)
-                    old_vert_a = e1v2;
-                // vertex between edge3 and edge1
-                let old_vert_b = '';
-                if (e3v1 == e1v1 || e3v1 == e1v2)
-                    old_vert_b = e3v1;
-                else if (e3v2 == e1v1 || e3v2 == e1v2)
-                    old_vert_b = e3v2;
-                // vertex between edge2 and edge3
-                let old_vert_c = '';
-                if (e2v1 == e3v1 || e2v1 == e3v2)
-                    old_vert_c = e2v1;
-                else if (e2v2 == e3v1 || e2v2 == e3v2)
-                    old_vert_c = e2v2;
+                const [new_e1_vert, new_e2_vert, new_e3_vert, old_vert_a, old_vert_b, old_vert_c] = loopsubdiv_get_newEdgeVerts_oldVerts(edges, oldedge_vertMap);
+                // const edge1 = edges[0];
+                // const [e1v1, e1v2] = edge1.split('=>');
+                // const new_e1_vert = oldedge_vertMap.get(edge1);
+                // const edge2 = edges[1];
+                // const [e2v1, e2v2] = edge2.split('=>');
+                // const new_e2_vert = oldedge_vertMap.get(edge2);
+                // const edge3 = edges[2];
+                // const [e3v1, e3v2] = edge3.split('=>');
+                // const new_e3_vert = oldedge_vertMap.get(edge3);
+                // // vertex between edge1 and edge2
+                // let old_vert_a: string = ''; 
+                // if(e1v1 == e2v1 || e1v1 == e2v2)
+                //   old_vert_a = e1v1;
+                // else if(e1v2 == e2v1 || e1v2 == e2v2)
+                //   old_vert_a = e1v2;
+                // // vertex between edge3 and edge1
+                // let old_vert_b: string = ''; 
+                // if(e3v1 == e1v1 || e3v1 == e1v2)
+                //   old_vert_b = e3v1;
+                // else if(e3v2 == e1v1 || e3v2 == e1v2)
+                //   old_vert_b = e3v2;
+                // // vertex between edge2 and edge3
+                // let old_vert_c: string = ''; 
+                // if(e2v1 == e3v1 || e2v1 == e3v2)
+                //   old_vert_c = e2v1;
+                // else if(e2v2 == e3v1 || e2v2 == e3v2)
+                //   old_vert_c = e2v2;
                 const new_vert_a = oldvert_newvert.get(old_vert_a);
                 const new_vert_b = oldvert_newvert.get(old_vert_b);
                 const new_vert_c = oldvert_newvert.get(old_vert_c);
@@ -284,33 +346,7 @@ export function loopSubdivision(mesh, iterations, adj) {
                     if ((old_vert_a == adj.faces[f][0] && old_vert_c == adj.faces[f][1] && old_vert_b == adj.faces[f][2]) || (old_vert_b == adj.faces[f][0] && old_vert_a == adj.faces[f][1] && old_vert_c == adj.faces[f][2]) || (old_vert_c == adj.faces[f][0] && old_vert_b == adj.faces[f][1] && old_vert_a == adj.faces[f][2]))
                         new_faces.push([`${new_vert_b.x},${new_vert_b.y},${new_vert_b.z}`, new_e1_vert, new_e3_vert]);
                     // add to adjVert
-                    let temp_adjverts = new_vertexAdjMap.get(`${new_vert_b.x},${new_vert_b.y},${new_vert_b.z}`);
-                    if (temp_adjverts != undefined) {
-                        temp_adjverts.push(new_e1_vert);
-                        temp_adjverts.push(new_e3_vert);
-                    }
-                    else {
-                        new_vertexAdjMap.set(`${new_vert_b.x},${new_vert_b.y},${new_vert_b.z}`, [new_e1_vert,
-                            new_e3_vert]);
-                    }
-                    temp_adjverts = new_vertexAdjMap.get(new_e3_vert);
-                    if (temp_adjverts != undefined) {
-                        temp_adjverts.push(new_e1_vert);
-                        temp_adjverts.push(`${new_vert_b.x},${new_vert_b.y},${new_vert_b.z}`);
-                    }
-                    else {
-                        new_vertexAdjMap.set(new_e3_vert, [new_e1_vert,
-                            `${new_vert_b.x},${new_vert_b.y},${new_vert_b.z}`]);
-                    }
-                    temp_adjverts = new_vertexAdjMap.get(new_e1_vert);
-                    if (temp_adjverts != undefined) {
-                        temp_adjverts.push(new_e3_vert);
-                        temp_adjverts.push(`${new_vert_b.x},${new_vert_b.y},${new_vert_b.z}`);
-                    }
-                    else {
-                        new_vertexAdjMap.set(new_e1_vert, [new_e3_vert,
-                            `${new_vert_b.x},${new_vert_b.y},${new_vert_b.z}`]);
-                    }
+                    loopsubdiv_add_adjacent_verts(new_vert_b, new_e1_vert, new_e3_vert, new_vertexAdjMap);
                     let new_e3_1 = `${new_vert_b.x},${new_vert_b.y},${new_vert_b.z}=>${new_e3_vert}`;
                     let new_e1_1 = `${new_vert_b.x},${new_vert_b.y},${new_vert_b.z}=>${new_e1_vert}`;
                     let new_face_e1 = `${new_e3_vert}=>${new_e1_vert}`;
@@ -364,33 +400,7 @@ export function loopSubdivision(mesh, iterations, adj) {
                     if ((old_vert_a == adj.faces[f][0] && old_vert_c == adj.faces[f][1] && old_vert_b == adj.faces[f][2]) || (old_vert_b == adj.faces[f][0] && old_vert_a == adj.faces[f][1] && old_vert_c == adj.faces[f][2]) || (old_vert_c == adj.faces[f][0] && old_vert_b == adj.faces[f][1] && old_vert_a == adj.faces[f][2]))
                         new_faces.push([`${new_vert_c.x},${new_vert_c.y},${new_vert_c.z}`, new_e3_vert, new_e2_vert]);
                     // add to adjVert
-                    temp_adjverts = new_vertexAdjMap.get(`${new_vert_c.x},${new_vert_c.y},${new_vert_c.z}`);
-                    if (temp_adjverts != undefined) {
-                        temp_adjverts.push(new_e2_vert);
-                        temp_adjverts.push(new_e3_vert);
-                    }
-                    else {
-                        new_vertexAdjMap.set(`${new_vert_c.x},${new_vert_c.y},${new_vert_c.z}`, [new_e2_vert,
-                            new_e3_vert]);
-                    }
-                    temp_adjverts = new_vertexAdjMap.get(new_e3_vert);
-                    if (temp_adjverts != undefined) {
-                        temp_adjverts.push(new_e2_vert);
-                        temp_adjverts.push(`${new_vert_c.x},${new_vert_c.y},${new_vert_c.z}`);
-                    }
-                    else {
-                        new_vertexAdjMap.set(new_e3_vert, [new_e2_vert,
-                            `${new_vert_c.x},${new_vert_c.y},${new_vert_c.z}`]);
-                    }
-                    temp_adjverts = new_vertexAdjMap.get(new_e2_vert);
-                    if (temp_adjverts != undefined) {
-                        temp_adjverts.push(new_e3_vert);
-                        temp_adjverts.push(`${new_vert_c.x},${new_vert_c.y},${new_vert_c.z}`);
-                    }
-                    else {
-                        new_vertexAdjMap.set(new_e2_vert, [new_e3_vert,
-                            `${new_vert_c.x},${new_vert_c.y},${new_vert_c.z}`]);
-                    }
+                    loopsubdiv_add_adjacent_verts(new_vert_c, new_e2_vert, new_e3_vert, new_vertexAdjMap);
                     let new_e3_2 = `${new_vert_c.x},${new_vert_c.y},${new_vert_c.z}=>${new_e3_vert}`;
                     let new_e2_1 = `${new_vert_c.x},${new_vert_c.y},${new_vert_c.z}=>${new_e2_vert}`;
                     let new_face_e2 = `${new_e3_vert}=>${new_e2_vert}`;
@@ -444,33 +454,7 @@ export function loopSubdivision(mesh, iterations, adj) {
                     if ((old_vert_a == adj.faces[f][0] && old_vert_c == adj.faces[f][1] && old_vert_b == adj.faces[f][2]) || (old_vert_b == adj.faces[f][0] && old_vert_a == adj.faces[f][1] && old_vert_c == adj.faces[f][2]) || (old_vert_c == adj.faces[f][0] && old_vert_b == adj.faces[f][1] && old_vert_a == adj.faces[f][2]))
                         new_faces.push([`${new_vert_a.x},${new_vert_a.y},${new_vert_a.z}`, new_e2_vert, new_e1_vert]);
                     // add to adjVert
-                    temp_adjverts = new_vertexAdjMap.get(`${new_vert_a.x},${new_vert_a.y},${new_vert_a.z}`);
-                    if (temp_adjverts != undefined) {
-                        temp_adjverts.push(new_e2_vert);
-                        temp_adjverts.push(new_e1_vert);
-                    }
-                    else {
-                        new_vertexAdjMap.set(`${new_vert_a.x},${new_vert_a.y},${new_vert_a.z}`, [new_e2_vert,
-                            new_e1_vert]);
-                    }
-                    temp_adjverts = new_vertexAdjMap.get(new_e1_vert);
-                    if (temp_adjverts != undefined) {
-                        temp_adjverts.push(new_e2_vert);
-                        temp_adjverts.push(`${new_vert_a.x},${new_vert_a.y},${new_vert_a.z}`);
-                    }
-                    else {
-                        new_vertexAdjMap.set(new_e1_vert, [new_e2_vert,
-                            `${new_vert_a.x},${new_vert_a.y},${new_vert_a.z}`]);
-                    }
-                    temp_adjverts = new_vertexAdjMap.get(new_e2_vert);
-                    if (temp_adjverts != undefined) {
-                        temp_adjverts.push(new_e1_vert);
-                        temp_adjverts.push(`${new_vert_a.x},${new_vert_a.y},${new_vert_a.z}`);
-                    }
-                    else {
-                        new_vertexAdjMap.set(new_e2_vert, [new_e1_vert,
-                            `${new_vert_a.x},${new_vert_a.y},${new_vert_a.z}`]);
-                    }
+                    loopsubdiv_add_adjacent_verts(new_vert_a, new_e2_vert, new_e1_vert, new_vertexAdjMap);
                     let new_e1_2 = `${new_vert_a.x},${new_vert_a.y},${new_vert_a.z}=>${new_e1_vert}`;
                     let new_e2_2 = `${new_vert_a.x},${new_vert_a.y},${new_vert_a.z}=>${new_e2_vert}`;
                     let new_face_e3 = `${new_e1_vert}=>${new_e2_vert}`;
@@ -524,33 +508,9 @@ export function loopSubdivision(mesh, iterations, adj) {
                     if ((old_vert_a == adj.faces[f][0] && old_vert_c == adj.faces[f][1] && old_vert_b == adj.faces[f][2]) || (old_vert_b == adj.faces[f][0] && old_vert_a == adj.faces[f][1] && old_vert_c == adj.faces[f][2]) || (old_vert_c == adj.faces[f][0] && old_vert_b == adj.faces[f][1] && old_vert_a == adj.faces[f][2]))
                         new_faces.push([new_e1_vert, new_e2_vert, new_e3_vert]);
                     // add to adjVert
-                    temp_adjverts = new_vertexAdjMap.get(new_e1_vert);
-                    if (temp_adjverts != undefined) {
-                        temp_adjverts.push(new_e2_vert);
-                        temp_adjverts.push(new_e3_vert);
-                    }
-                    else {
-                        new_vertexAdjMap.set(new_e1_vert, [new_e2_vert,
-                            new_e3_vert]);
-                    }
-                    temp_adjverts = new_vertexAdjMap.get(new_e3_vert);
-                    if (temp_adjverts != undefined) {
-                        temp_adjverts.push(new_e2_vert);
-                        temp_adjverts.push(new_e1_vert);
-                    }
-                    else {
-                        new_vertexAdjMap.set(new_e3_vert, [new_e2_vert,
-                            new_e1_vert]);
-                    }
-                    temp_adjverts = new_vertexAdjMap.get(new_e2_vert);
-                    if (temp_adjverts != undefined) {
-                        temp_adjverts.push(new_e3_vert);
-                        temp_adjverts.push(new_e1_vert);
-                    }
-                    else {
-                        new_vertexAdjMap.set(new_e2_vert, [new_e3_vert,
-                            new_e1_vert]);
-                    }
+                    const [temp1, temp2, temp3] = new_e1_vert.split(',').map(Number);
+                    const new_e1_vert_vec = new Vec3([temp1, temp2, temp3]);
+                    loopsubdiv_add_adjacent_verts(new_e1_vert_vec, new_e2_vert, new_e3_vert, new_vertexAdjMap);
                     // add to new_edgeFaceMap
                     new_face_e1 = `${new_e3_vert}=>${new_e1_vert}`;
                     new_face_e2 = `${new_e3_vert}=>${new_e2_vert}`;
@@ -647,7 +607,44 @@ function remake_mesh_positions(adj, mesh) {
 }
 export function catmullClarkSubdivision(mesh, iterations) {
     /*
-      PSEUDOCODE THIS NEXT
+      Make a separate adjacency_data class for quad meshes (basically the same as the other one but with one more point)
+      
+      Compute Face points:
+      - for each face, compute the face point (facepoint = average of 4 vertices of quad)
+  
+      Compute Edge points:
+      - for each edge compute the edge point
+        - get the two vertices on edge (v1 and v2)
+        - get the face points of the two adjacent faces sharing the edge (if boundary edge, just that one face)
+        - get the average of the things above ^, so new_edgepoint = (v1 + v2 + f1 + f2) / 4.0
+          - if boundary, then new_edgepoint = (v1 + v2 + f1) / 3.0
+      
+      Compute new vertex positions:
+      - for each original vertex
+        - F = average of all face points on adjacent faces
+        - R = average of midpoints of all edges it is on
+        - V = original position of vertex
+        - n = # of adjacent faces
+        - new_vertex = (F + 2R + (n-3)V) / n
+  
+      Construct New Faces:
+      - Each original face becomes 4 new faces
+        v0--e01--v1       v0, v1, v2, v3 are new positions of original vertices
+        |         |       F is the face point
+       e30   F   e12      e01, e12, e30, e23 are the new edge points between
+        |         |         vertices v0 and v1; v1 and v2; v3 and v0; and v2 and v3
+        v3--e23--v2         respectively
+        
+        - new face 1: [v0, e30, F, e01]
+        - new face 2: [e01, F, e12, v1]
+        - new face 3: [e30, v3, e23, F]
+        - new face 4: [F, e23, v2, e12]
+        (in those orders to maintain counterclockwise order!)
+      
+        MAKE SURE TO PUT THIS ALL IN A LOOP!!
+      
+      Remake the vertex positions array for mesh.geometry (triangulate them)
+      Recompute the normals (for each triangle from ^)
     */
 }
 //# sourceMappingURL=Subdivision.js.map
