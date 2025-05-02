@@ -87,9 +87,6 @@ export class adjacency_data {
                 this.faceEdgeMap.set(face_index, [edge1, edge2, edge3]);
         }
         this.removeDuplicatesFromMaps();
-        // console.log("vertex adj: ", this.vertexAdjMap.entries());
-        // console.log("faceedge: ", this.faceEdgeMap.entries());
-        // console.log("edgeface: ", this.edgeFaceMap.entries());
     }
     removeDuplicatesFromMaps() {
         for (const [key, value] of this.vertexAdjMap.entries()) {
@@ -108,7 +105,6 @@ export class adjacency_data {
 }
 // for the sake of the demo and testing, we will say that the first edge in the edgeFaceMap is a sharp crease
 export function loopSubdivision(mesh, iterations, adj) {
-    // console.log("interations: ", iterations);
     for (let iter = 0; iter < iterations; iter++) {
         let new_verts = new Map();
         let oldedge_vertMap = new Map();
@@ -118,22 +114,18 @@ export function loopSubdivision(mesh, iterations, adj) {
         let new_vertexAdjMap = new Map();
         let new_faceEdgeMap = new Map();
         let beta = 3.0 / 16.0; // default assumes n = 3, n = # of neighboring vertices
-        // let first: boolean = true; // here just to mark first edge as sharp edge////////////////////////////////////////////////////////////
-        let first = false;
+        let first = true; // here just to mark first edge as sharp edge////////////////////////////////////////////////////////////
+        // let first: boolean = false;
         for (const [edge, faces] of adj.edgeFaceMap.entries()) {
             const [v1, v2] = edge.split('=>');
             const a = adj.verts.get(v1);
             const b = adj.verts.get(v2);
             if (faces.length == 2 && !first) { // interior edge (vertices on edge are also interior)
                 // compute even (new) vertices
-                if (a == undefined)
-                    console.log("huha");
-                else {
+                if (a != undefined) {
                     let new_vert_v1 = new Vec3();
                     const adj_verts_v1 = adj.vertexAdjMap.get(v1);
-                    if (adj_verts_v1 == undefined)
-                        console.log("huhadjv1");
-                    else {
+                    if (adj_verts_v1 != undefined) {
                         const n = adj_verts_v1.length;
                         let sum = new Vec3();
                         for (let i = 0; i < n; i++) {
@@ -151,14 +143,10 @@ export function loopSubdivision(mesh, iterations, adj) {
                         new_verts.set(`${new_vert_v1.x},${new_vert_v1.y},${new_vert_v1.z}`, new_vert_v1);
                     }
                 }
-                if (b == undefined)
-                    console.log("huhb");
-                else {
+                if (b != undefined) {
                     let new_vert_v2 = new Vec3();
                     const adj_verts_v2 = adj.vertexAdjMap.get(v2);
-                    if (adj_verts_v2 == undefined)
-                        console.log("huhadjv2");
-                    else {
+                    if (adj_verts_v2 != undefined) {
                         const n = adj_verts_v2.length;
                         let sum = new Vec3();
                         for (let i = 0; i < n; i++) {
@@ -180,9 +168,7 @@ export function loopSubdivision(mesh, iterations, adj) {
                 // get c
                 const edges_on_face1 = adj.faceEdgeMap.get(faces[0]);
                 let string_c = '';
-                if (edges_on_face1 == undefined)
-                    console.log("huhc");
-                else {
+                if (edges_on_face1 != undefined) {
                     for (let i = 0; i < 3; i++) {
                         const curr_edge = edges_on_face1[i];
                         if (curr_edge == edge)
@@ -198,9 +184,7 @@ export function loopSubdivision(mesh, iterations, adj) {
                 // get d
                 const edges_on_face2 = adj.faceEdgeMap.get(faces[1]);
                 let string_d = '';
-                if (edges_on_face2 == undefined)
-                    console.log("huhd");
-                else {
+                if (edges_on_face2 != undefined) {
                     for (let i = 0; i < 3; i++) {
                         const curr_edge = edges_on_face2[i];
                         if (curr_edge == edge)
@@ -225,11 +209,10 @@ export function loopSubdivision(mesh, iterations, adj) {
                     new_verts.set(`${new_vert.x},${new_vert.y},${new_vert.z}`, new_vert);
                     oldedge_vertMap.set(edge, `${new_vert.x},${new_vert.y},${new_vert.z}`);
                 }
-                else
-                    console.log("huhabcd");
             }
             else { // boundary or sharp edge
                 first = false;
+                console.log("boundaryyy");
                 if (a != undefined && b != undefined) {
                     // compute even (old) vertices
                     // new value = 0.125 * (a+b) + 0.75 * original point
@@ -257,14 +240,10 @@ export function loopSubdivision(mesh, iterations, adj) {
                     new_verts.set(`${new_vert.x},${new_vert.y},${new_vert.z}`, new_vert);
                     oldedge_vertMap.set(edge, `${new_vert.x},${new_vert.y},${new_vert.z}`);
                 }
-                else
-                    console.log("huhab");
             }
         }
         let curr_face_index = 0;
         for (let f = 0; f < adj.faces.length; f++) {
-            // console.log("f: ", f);
-            // console.log("faceedgemap: ", adj.faceEdgeMap.entries());
             const edges = adj.faceEdgeMap.get(f);
             if (edges != undefined) {
                 const edge1 = edges[0];
@@ -297,16 +276,6 @@ export function loopSubdivision(mesh, iterations, adj) {
                 const new_vert_a = oldvert_newvert.get(old_vert_a);
                 const new_vert_b = oldvert_newvert.get(old_vert_b);
                 const new_vert_c = oldvert_newvert.get(old_vert_c);
-                // console.log("old_vert_a: ", old_vert_a);
-                // console.log("old_vert_b: ", old_vert_b);
-                // console.log("old_vert_c: ", old_vert_c);
-                // console.log("oldvert_newvert: ", oldvert_newvert.entries());
-                // console.log("new_vert_a: ", new_vert_a);
-                // console.log("new_vert_b: ", new_vert_b);
-                // console.log("new_vert_c: ", new_vert_c);
-                // console.log("new_e1_vert: ", new_e1_vert);
-                // console.log("new_e2_vert: ", new_e2_vert);
-                // console.log("new_e3_vert: ", new_e3_vert);
                 if (new_vert_a != undefined && new_vert_b != undefined && new_vert_c != undefined && new_e1_vert != undefined
                     && new_e2_vert != undefined && new_e3_vert != undefined) {
                     // make new face 1 (using b, new vert on edge1, and new vert on edge3)
@@ -630,11 +599,6 @@ export function loopSubdivision(mesh, iterations, adj) {
                         new_faceEdgeMap.set(curr_face_index, [new_face_e1, new_face_e2, new_face_e3]);
                     curr_face_index++;
                 }
-                else
-                    console.log("huhbunchofstuff");
-            }
-            else {
-                console.log("huhedge");
             }
         }
         adj.faces = new_faces;
@@ -643,8 +607,6 @@ export function loopSubdivision(mesh, iterations, adj) {
         adj.vertexAdjMap = new_vertexAdjMap;
         adj.verts = new_verts;
     }
-    // console.log("old verts: ", adj.verts.entries());
-    // console.log("new verts: ", new_verts.entries());
     remake_mesh_positions(adj, mesh);
 }
 // assuming each face already has vertices in counterclockwise order
@@ -677,20 +639,12 @@ function remake_mesh_positions(adj, mesh) {
                 new_normals.push(normal.x, normal.y, normal.z);
             }
         }
-        else
-            console.log("huhfacesabc");
     }
     mesh.geometry.position.values = new Float32Array(new_positions);
     mesh.geometry.position.count = new_positions.length / 3;
     mesh.geometry.normal.values = new Float32Array(new_normals);
     mesh.geometry.normal.count = new_normals.length / 3;
 }
-/*
-    - NOTE:
-      - THIS IS ALL ONE ITERATION, SO MAKE A FOR LOOP AROUND THIS THAT GOES UNTIL iterations NUMBER OF TIMES!!!!!!
-      - AFTER THE LOOP, LOOP THROUGH EACH FACE, GET THE THREE VERTICES ON THAT FACE, CROSS PRODUCT (IN DC) AND ADD TO A NEW
-          ARRAY OF VERTICES IN COUNTERCLOCKWISE ORDER, AND SET MESH'S GEOMETRY POSTION TO THIS NEW ARRAY
-  */
 export function catmullClarkSubdivision(mesh, iterations) {
     /*
       PSEUDOCODE THIS NEXT

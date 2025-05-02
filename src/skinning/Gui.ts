@@ -56,7 +56,8 @@ export class GUI implements IGUI {
   public hoverX: number = 0;
   public hoverY: number = 0;
 
-  public subdivision_iter: number = 0;
+  public subdivision_iter: number;
+  public quadmesh: boolean;
 
   /**
    *
@@ -70,6 +71,8 @@ export class GUI implements IGUI {
     this.width = canvas.width;
     this.prevX = 0;
     this.prevY = 0;
+    this.subdivision_iter = 0;
+    this.quadmesh = false;
     
     this.animation = animation;
     
@@ -99,7 +102,7 @@ export class GUI implements IGUI {
     this.fps = false;
     this.dragging = false;
     this.time = 0;
-	this.mode = Mode.edit;
+	  this.mode = Mode.edit;
     
     this.camera = new Camera(
       new Vec3([0, 0, -6]),
@@ -250,40 +253,53 @@ export class GUI implements IGUI {
   public onKeydown(key: KeyboardEvent): void {
     switch (key.code) {
       case "Digit1": {
-        this.animation.setScene("./static/assets/skinning/cross_cubes.dae", 0);
         this.subdivision_iter = 0;
+        this.animation.setScene("./static/assets/skinning/cross_cubes.dae");
         break;
       }
       case "Digit2": {
-        this.animation.setScene("./static/assets/skinning/cross_cubes.dae", 1);
         this.subdivision_iter = 1;
+        this.animation.setScene("./static/assets/skinning/cross_cubes.dae");
         break;
       }
       case "Digit3": {
-        this.animation.setScene("./static/assets/skinning/cross_cubes.dae", 2);
         this.subdivision_iter = 2;
+        this.animation.setScene("./static/assets/skinning/cross_cubes.dae");
         break;
       }      
       case "Digit4": {
-        this.animation.setScene("./static/assets/skinning/cross_cubes.dae", 3);
         this.subdivision_iter = 3;
+        this.animation.setScene("./static/assets/skinning/cross_cubes.dae");
         break;
       }
       case "Digit5": {
-        this.animation.setScene("./static/assets/skinning/cross_cubes.dae", 7);
         this.subdivision_iter = 7;
+        this.animation.setScene("./static/assets/skinning/cross_cubes.dae");
         break;
       }
       case "Digit6": {
-        this.animation.setScene("./static/assets/skinning/head.dae", 1);
+        this.quadmesh = true;
+        this.animation.setScene("./static/assets/skinning/cross_cubes_quads.dae");
         break;
       }
       case "Digit7": {
-        this.animation.setScene("./static/assets/skinning/wolf.dae", 1);
+        this.quadmesh = true;
+        this.animation.setScene("./static/assets/skinning/cross_cubes_quads.dae");
         break;
       }
       case "Digit8": {
-        this.animation.setScene("./static/assets/skinning/cross_cubes.dae", 1);
+        this.quadmesh = true;
+        this.animation.setScene("./static/assets/skinning/cross_cubes_quads.dae");
+        break;
+      }
+      case "Digit9": {
+        this.quadmesh = true;
+        this.animation.setScene("./static/assets/skinning/cross_cubes_quads.dae");
+        break;
+      }
+      case "Digit0": {
+        this.quadmesh = true;
+        this.animation.setScene("./static/assets/skinning/cross_cubes_quads.dae");
         break;
       }
       case "KeyW": {

@@ -187,12 +187,8 @@ class CLoader {
             this.skinnedMeshes.forEach(m => {
                 this.meshes.push(new Mesh(new MeshLoader(m)));
             });
-            // console.log("meshes: ", this.meshes);
-            // if(this.meshes == undefined)
-            //   console.log("broooooooooooooooooo");
             const adj = new adjacency_data(this.meshes[0]);
             loopSubdivision(this.meshes[0], iterations, adj);
-            // console.log("in load");
             // getting the images
             let lib = collada.library;
             let mats = lib.materials;

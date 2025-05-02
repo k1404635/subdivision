@@ -246,14 +246,8 @@ class CLoader {
         this.meshes.push(new Mesh(new MeshLoader(m)));
       });
 
-
-      // console.log("meshes: ", this.meshes);
-      // if(this.meshes == undefined)
-      //   console.log("broooooooooooooooooo");
       const adj = new adjacency_data(this.meshes[0]);
-      loopSubdivision(this.meshes[0], iterations, adj);
-      // console.log("in load");
-      
+      loopSubdivision(this.meshes[0], iterations, adj);     
 
       // getting the images
       let lib = collada.library as any;
