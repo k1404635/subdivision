@@ -1,5 +1,6 @@
 import { ColladaLoader, Collada } from "../lib/threejs/examples/jsm/loaders/ColladaLoader.js";
 import { Object3D, Scene, MeshLambertMaterial, SkinnedMesh, BufferGeometry} from "../lib/threejs/src/Three.js";
+import { FileLoader } from "../lib/threejs/build/three.module.js";
 import { Vec3 } from "../lib/tsm/Vec3.js";
 import { Mat4, Vec4 } from "../lib/TSM.js";
 import { Quat } from "../lib/tsm/Quat.js";
@@ -166,6 +167,7 @@ export class MeshLoader {
         console.error("BONE ORDER NOT XYZ");
       }
       let parentId: number = -1;
+
       if (bone.parent?.type !== 'SkinnedMesh') {
         let uuid: string = "";
         if (bone.parent?.uuid) {
@@ -235,7 +237,7 @@ class CLoader {
     this.meshes = [];
   }
 
-  public load(callback: Function, iterations: number, quadmesh: boolean): void {
+  public load(callback: Function, iterations: number, quadmesh: boolean, obj_location: string): void {
     this.loader.load(this.fileLocation, (collada: Collada) => {
       console.log("File loaded successfully");
       collada.scene.updateWorldMatrix(true, true);
@@ -250,8 +252,20 @@ class CLoader {
         const adj = new loopsubdiv_adjacency_data(this.meshes[0]);
         loopSubdivision(this.meshes[0], iterations, adj); 
       } else {
-        const adj2 = new catmullclark_adjacency_data(this.meshes[0]);
-        catmullClarkSubdivision(this.meshes[0], iterations, adj2);
+        const fileLoader = new FileLoader();
+        let flatVertexArray: number[] = [];
+        fileLoader.load(
+          obj_location, (response) => {
+            flatVertexArray = this.parseObjVertexPositions(response);
+            const adj2 = new catmullclark_adjacency_data(flatVertexArray);
+            catmullClarkSubdivision(this.meshes[0], iterations, adj2);
+            callback();
+          },
+          undefined,
+          (error) => {
+              console.error('Error loading OBJ file:', error);
+          }
+        );
       }
 
       // getting the images
@@ -302,6 +316,40 @@ class CLoader {
     });
   }
 
+  private parseObjVertexPositions(objText: string): number[] {
+    const lines = objText.split('\n');
+    const vertices: [number, number, number][] = [];
+    const quadsFlat: number[] = [];
+
+    for (const line of lines) {
+        if (line.startsWith('v ')) {
+            const [, xStr, yStr, zStr] = line.trim().split(/\s+/);
+            const x = parseFloat(xStr);
+            const y = parseFloat(yStr);
+            const z = parseFloat(zStr);
+            vertices.push([x, y, z]);
+        }
+    }
+
+    for (const line of lines) {
+        if (line.startsWith('f ')) {
+            const parts = line.trim().split(/\s+/).slice(1);
+
+            if (parts.length !== 4) continue; // Skip non-quads
+
+            for (const part of parts) {
+                const vertexIndexStr = part.split('/')[0];
+                const vertexIndex = parseInt(vertexIndexStr, 10);
+                const [x, y, z] = vertices[vertexIndex - 1];
+                quadsFlat.push(x, y, z);
+            }
+        }
+    }
+
+    return quadsFlat;
+  }
+
+
   private findSkinnedMeshes(element?: Object3D): void {
     if (this.scene == null) {
       console.error('Error loading scene');
@@ -327,7 +375,6 @@ class CLoader {
       }
     });
   }
-
 }
 
 export {

@@ -27,6 +27,7 @@ export class GUI {
         this.subdivision_iter = 0;
         this.quadmesh = false;
         this.animation = animation;
+        this.obj_location = "";
         this.reset();
         this.registerEventListeners(canvas);
     }
@@ -170,61 +171,85 @@ export class GUI {
             case "Digit1": {
                 this.subdivision_iter = 0;
                 this.quadmesh = false;
-                this.animation.setScene("./static/assets/skinning/cross_cubes.dae");
+                this.obj_location = "";
+                // this.animation.setScene("./static/assets/skinning/cross_cubes.dae");
+                this.animation.setScene("./static/assets/skinning/single_cube.dae");
                 break;
             }
             case "Digit2": {
                 this.subdivision_iter = 1;
                 this.quadmesh = false;
+                this.obj_location = "";
                 this.animation.setScene("./static/assets/skinning/cross_cubes.dae");
+                // this.animation.setScene("./static/assets/skinning/single_cube.dae");
                 break;
             }
             case "Digit3": {
                 this.subdivision_iter = 2;
                 this.quadmesh = false;
+                this.obj_location = "";
                 this.animation.setScene("./static/assets/skinning/cross_cubes.dae");
+                // this.animation.setScene("./static/assets/skinning/single_cube.dae");
                 break;
             }
             case "Digit4": {
                 this.subdivision_iter = 3;
                 this.quadmesh = false;
+                this.obj_location = "";
                 this.animation.setScene("./static/assets/skinning/cross_cubes.dae");
+                // this.animation.setScene("./static/assets/skinning/single_cube.dae");
                 break;
             }
             case "Digit5": {
                 this.subdivision_iter = 7;
                 this.quadmesh = false;
                 this.animation.setScene("./static/assets/skinning/cross_cubes.dae");
+                // this.animation.setScene("./static/assets/skinning/single_cube.dae");
                 break;
             }
             case "Digit6": {
                 this.quadmesh = true;
                 this.subdivision_iter = 1;
-                this.animation.setScene("./static/assets/skinning/cross_cubes_quads.dae");
+                this.obj_location = "./static/assets/skinning/cross_cubes_quads.obj";
+                this.animation.setScene("./static/assets/skinning/cross_cubes.dae");
+                // this.obj_location = "./static/assets/skinning/single_cube_quads.obj";
+                // this.animation.setScene("./static/assets/skinning/single_cube.dae");
                 break;
             }
             case "Digit7": {
                 this.quadmesh = true;
                 this.subdivision_iter = 2;
-                this.animation.setScene("./static/assets/skinning/cross_cubes_quads.dae");
+                this.obj_location = "./static/assets/skinning/cross_cubes_quads.obj";
+                this.animation.setScene("./static/assets/skinning/cross_cubes.dae");
+                // this.obj_location = "./static/assets/skinning/single_cube_quads.obj";
+                // this.animation.setScene("./static/assets/skinning/single_cube.dae");
                 break;
             }
             case "Digit8": {
                 this.quadmesh = true;
                 this.subdivision_iter = 3;
-                this.animation.setScene("./static/assets/skinning/cross_cubes_quads.dae");
+                this.obj_location = "./static/assets/skinning/cross_cubes_quads.obj";
+                this.animation.setScene("./static/assets/skinning/cross_cubes.dae");
+                // this.obj_location = "./static/assets/skinning/single_cube_quads.obj";
+                // this.animation.setScene("./static/assets/skinning/single_cube.dae");
                 break;
             }
             case "Digit9": {
                 this.quadmesh = true;
-                this.subdivision_iter = 7;
-                this.animation.setScene("./static/assets/skinning/cross_cubes_quads.dae");
+                this.subdivision_iter = 6;
+                this.obj_location = "./static/assets/skinning/cross_cubes_quads.obj";
+                this.animation.setScene("./static/assets/skinning/cross_cubes.dae");
+                // this.obj_location = "./static/assets/skinning/single_cube_quads.obj";
+                // this.animation.setScene("./static/assets/skinning/single_cube.dae");
                 break;
             }
             case "Digit0": {
                 this.quadmesh = true;
-                this.subdivision_iter = 8;
-                this.animation.setScene("./static/assets/skinning/cross_cubes_quads.dae");
+                this.subdivision_iter = 7;
+                this.obj_location = "./static/assets/skinning/cross_cubes_quads.obj";
+                this.animation.setScene("./static/assets/skinning/cross_cubes.dae");
+                // this.obj_location = "./static/assets/skinning/single_cube_quads.obj";
+                // this.animation.setScene("./static/assets/skinning/single_cube.dae");
                 break;
             }
             case "KeyW": {

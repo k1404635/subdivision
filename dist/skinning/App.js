@@ -86,11 +86,7 @@ export class SkinningAnimation extends CanvasAnimation {
         this.sceneRenderPass.addUniform("mView", (gl, loc) => {
             gl.uniformMatrix4fv(loc, false, new Float32Array(this.gui.viewMatrix().all()));
         });
-        if (!this.gui.quadmesh)
-            this.sceneRenderPass.setDrawData(this.ctx.TRIANGLES, fIndices.length, this.ctx.UNSIGNED_INT, 0);
-        else {
-            // triangulate quads
-        }
+        this.sceneRenderPass.setDrawData(this.ctx.TRIANGLES, fIndices.length, this.ctx.UNSIGNED_INT, 0);
         this.sceneRenderPass.setup();
     }
     /**
@@ -204,7 +200,7 @@ export class SkinningAnimation extends CanvasAnimation {
     setScene(fileLocation) {
         this.loadedScene = fileLocation;
         this.scene = new CLoader(fileLocation);
-        this.scene.load(() => this.initScene(), this.gui.subdivision_iter, this.gui.quadmesh);
+        this.scene.load(() => this.initScene(), this.gui.subdivision_iter, this.gui.quadmesh, this.gui.obj_location);
     }
 }
 export function initializeCanvas() {

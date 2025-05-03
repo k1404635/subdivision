@@ -122,6 +122,7 @@ export class SkinningAnimation extends CanvasAnimation {
 
     let faceCount = this.scene.meshes[0].geometry.position.count / 3;
     let fIndices = new Uint32Array(faceCount * 3);
+
     for (let i = 0; i < faceCount * 3; i += 3) {
       fIndices[i] = i;
       fIndices[i + 1] = i + 1;
@@ -152,11 +153,7 @@ export class SkinningAnimation extends CanvasAnimation {
         gl.uniformMatrix4fv(loc, false, new Float32Array(this.gui.viewMatrix().all()));
     });
 
-    if(!this.gui.quadmesh)
-      this.sceneRenderPass.setDrawData(this.ctx.TRIANGLES, fIndices.length, this.ctx.UNSIGNED_INT, 0);
-    else {
-      // triangulate quads
-    }
+    this.sceneRenderPass.setDrawData(this.ctx.TRIANGLES, fIndices.length, this.ctx.UNSIGNED_INT, 0);
     this.sceneRenderPass.setup();
   }
  
@@ -313,7 +310,7 @@ export class SkinningAnimation extends CanvasAnimation {
   public setScene(fileLocation: string): void {
     this.loadedScene = fileLocation;
     this.scene = new CLoader(fileLocation);
-    this.scene.load(() => this.initScene(), this.gui.subdivision_iter, this.gui.quadmesh);
+    this.scene.load(() => this.initScene(), this.gui.subdivision_iter, this.gui.quadmesh, this.gui.obj_location);
   }
 }
 

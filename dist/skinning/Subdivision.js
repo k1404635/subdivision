@@ -87,15 +87,13 @@ export class loopsubdiv_adjacency_data {
             else
                 this.faceEdgeMap.set(face_index, [edge1, edge2, edge3]);
         }
-        // removeDuplicatesFromMaps(this.vertexAdjMap, this.faceEdgeMap, this.edgeFaceMap);
         removeDuplicatesFromMap(this.edgeFaceMap);
         removeDuplicatesFromMap(this.faceEdgeMap);
         removeDuplicatesFromMap(this.vertexAdjMap);
     }
 }
 export class catmullclark_adjacency_data {
-    constructor(mesh) {
-        const positions = mesh.geometry.position.values;
+    constructor(positions) {
         this.vertexFaceMap = new Map();
         this.verts = new Map();
         this.edgeFaceMap = new Map();
@@ -141,26 +139,6 @@ export class catmullclark_adjacency_data {
             let edge2 = v2 + '=>' + v3;
             let edge3 = v3 + '=>' + v4;
             let edge4 = v4 + '=>' + v1;
-            let edges = this.vertexEdgeMap.get(v1);
-            if (edges == undefined)
-                this.vertexEdgeMap.set(v1, [edge1, edge4]);
-            else
-                edges.push(edge1, edge4);
-            edges = this.vertexEdgeMap.get(v2);
-            if (edges == undefined)
-                this.vertexEdgeMap.set(v2, [edge1, edge2]);
-            else
-                edges.push(edge1, edge2);
-            edges = this.vertexEdgeMap.get(v3);
-            if (edges == undefined)
-                this.vertexEdgeMap.set(v3, [edge2, edge3]);
-            else
-                edges.push(edge2, edge3);
-            edges = this.vertexEdgeMap.get(v4);
-            if (edges == undefined)
-                this.vertexEdgeMap.set(v4, [edge3, edge4]);
-            else
-                edges.push(edge3, edge4);
             let edgeVal = this.edgeFaceMap.get(edge1);
             if (edgeVal == undefined) {
                 edge1 = v2 + '=>' + v1;
@@ -205,6 +183,26 @@ export class catmullclark_adjacency_data {
             }
             else
                 edgeVal.push(face_index);
+            let edges = this.vertexEdgeMap.get(v1);
+            if (edges == undefined)
+                this.vertexEdgeMap.set(v1, [edge1, edge4]);
+            else
+                edges.push(edge1, edge4);
+            edges = this.vertexEdgeMap.get(v2);
+            if (edges == undefined)
+                this.vertexEdgeMap.set(v2, [edge1, edge2]);
+            else
+                edges.push(edge1, edge2);
+            edges = this.vertexEdgeMap.get(v3);
+            if (edges == undefined)
+                this.vertexEdgeMap.set(v3, [edge2, edge3]);
+            else
+                edges.push(edge2, edge3);
+            edges = this.vertexEdgeMap.get(v4);
+            if (edges == undefined)
+                this.vertexEdgeMap.set(v4, [edge3, edge4]);
+            else
+                edges.push(edge3, edge4);
             // make faceEdgeMap
             let face_edges = this.faceEdgeMap.get(face_index);
             if (face_edges != undefined) {
@@ -216,7 +214,6 @@ export class catmullclark_adjacency_data {
             else
                 this.faceEdgeMap.set(face_index, [edge1, edge2, edge3, edge4]);
         }
-        // removeDuplicatesFromMaps(this.vertexFaceMap, this.faceEdgeMap, this.edgeFaceMap);
         removeDuplicatesFromMap(this.edgeFaceMap);
         removeDuplicatesFromMap(this.faceEdgeMap);
         removeDuplicatesFromMap(this.vertexEdgeMap);
@@ -231,13 +228,11 @@ function removeDuplicatesFromMap(map) {
 }
 function loopSubdivision_newVerts(adj, new_verts, oldedge_vertMap, oldvert_newvert) {
     let beta = 3.0 / 16.0; // default assumes n = 3, n = # of neighboring vertices
-    // let first: boolean = true; // here just to mark first edge as sharp edge////////////////////////////////////////////////////////////
-    let first = false;
     for (const [edge, faces] of adj.edgeFaceMap.entries()) {
         const [v1, v2] = edge.split('=>');
         const a = adj.verts.get(v1);
         const b = adj.verts.get(v2);
-        if (faces.length == 2 && !first) { // interior edge (vertices on edge are also interior)
+        if (faces.length == 2) { // interior edge (vertices on edge are also interior)
             // compute even (new) vertices
             if (a != undefined) {
                 let new_vert_v1 = new Vec3();
@@ -269,7 +264,6 @@ function loopSubdivision_newVerts(adj, new_verts, oldedge_vertMap, oldvert_newve
                         sum.add(new Vec3([adj1, adj2, adj3]));
                     }
                     beta = (1.0 / n) * (0.625 - Math.pow((0.375 + 0.25 * Math.cos((2 * Math.PI) / n)), 2));
-                    // new value = original point * (1-n*beta) + (sum up all points of neighboring vertices) * beta
                     sum.scale(beta);
                     b.scale(1 - n * beta, new_vert_v2);
                     new_vert_v2.add(sum);
@@ -324,7 +318,6 @@ function loopSubdivision_newVerts(adj, new_verts, oldedge_vertMap, oldvert_newve
             }
         }
         else { // boundary or sharp edge
-            first = false;
             if (a != undefined && b != undefined) {
                 // compute even (old) vertices
                 // new value = 0.125 * (a+b) + 0.75 * original point
@@ -362,8 +355,7 @@ function loopsubdiv_add_adjacent_verts(new_vert1, new_vert2, new_vert3, new_vert
         temp_adjverts.push(new_vert3);
     }
     else {
-        new_vertexAdjMap.set(`${new_vert1.x},${new_vert1.y},${new_vert1.z}`, [new_vert2,
-            new_vert3]);
+        new_vertexAdjMap.set(`${new_vert1.x},${new_vert1.y},${new_vert1.z}`, [new_vert2, new_vert3]);
     }
     temp_adjverts = new_vertexAdjMap.get(new_vert3);
     if (temp_adjverts != undefined) {
@@ -371,8 +363,7 @@ function loopsubdiv_add_adjacent_verts(new_vert1, new_vert2, new_vert3, new_vert
         temp_adjverts.push(`${new_vert1.x},${new_vert1.y},${new_vert1.z}`);
     }
     else {
-        new_vertexAdjMap.set(new_vert3, [new_vert2,
-            `${new_vert1.x},${new_vert1.y},${new_vert1.z}`]);
+        new_vertexAdjMap.set(new_vert3, [new_vert2, `${new_vert1.x},${new_vert1.y},${new_vert1.z}`]);
     }
     temp_adjverts = new_vertexAdjMap.get(new_vert2);
     if (temp_adjverts != undefined) {
@@ -380,8 +371,7 @@ function loopsubdiv_add_adjacent_verts(new_vert1, new_vert2, new_vert3, new_vert
         temp_adjverts.push(`${new_vert1.x},${new_vert1.y},${new_vert1.z}`);
     }
     else {
-        new_vertexAdjMap.set(new_vert2, [new_vert3,
-            `${new_vert1.x},${new_vert1.y},${new_vert1.z}`]);
+        new_vertexAdjMap.set(new_vert2, [new_vert3, `${new_vert1.x},${new_vert1.y},${new_vert1.z}`]);
     }
 }
 function loopsubdiv_get_newEdgeVerts_oldVerts(edges, oldedge_vertMap) {
@@ -414,7 +404,6 @@ function loopsubdiv_get_newEdgeVerts_oldVerts(edges, oldedge_vertMap) {
         old_vert_c = e2v2;
     return [new_e1_vert, new_e2_vert, new_e3_vert, old_vert_a, old_vert_b, old_vert_c];
 }
-// for the sake of the demo and testing, we will say that the first edge in the edgeFaceMap is a sharp crease
 export function loopSubdivision(mesh, iterations, adj) {
     for (let iter = 0; iter < iterations; iter++) {
         let new_verts = new Map();
@@ -664,7 +653,6 @@ export function loopSubdivision(mesh, iterations, adj) {
     }
     loopsubdiv_remake_mesh_positions(adj, mesh);
 }
-// assuming each face already has vertices in counterclockwise order
 function loopsubdiv_remake_mesh_positions(adj, mesh) {
     let new_positions = [];
     let new_normals = [];
@@ -713,10 +701,8 @@ function catmullclark_compute_facepoints(face_points, faces, verts, new_verts) {
             sum.add(v4);
             sum.scale(0.25);
             face_points[f] = sum;
-            new_verts.set(`${sum.x},${sum.y},$${sum.z}`, sum);
+            new_verts.set(`${sum.x},${sum.y},${sum.z}`, sum);
         }
-        else
-            console.log("huhv1v2v3v4");
     }
 }
 function catmullclark_compute_edgepoints(edgeFaceMap, face_points, verts, oldedge_edgepoint, new_verts) {
@@ -736,7 +722,7 @@ function catmullclark_compute_edgepoints(edgeFaceMap, face_points, verts, oldedg
                 new_edgepoint.add(facepoint2);
                 new_edgepoint.scale(0.25);
             }
-            else { // boundary edge (maybe also sharp edge??)
+            else { // boundary edge
                 const facepoint = face_points[faces[0]];
                 v1.add(v2, new_edgepoint);
                 new_edgepoint.add(facepoint);
@@ -745,8 +731,6 @@ function catmullclark_compute_edgepoints(edgeFaceMap, face_points, verts, oldedg
             oldedge_edgepoint.set(edge, new_edgepoint);
             new_verts.set(`${new_edgepoint.x},${new_edgepoint.y},${new_edgepoint.z}`, new_edgepoint);
         }
-        else
-            console.log("huhv1v2");
     });
 }
 function catmullclark_compute_new_verts(verts, vertexFaceMap, face_points, oldedge_edgepoint, vertexEdgeMap, oldvert_newvert, new_verts) {
@@ -762,26 +746,17 @@ function catmullclark_compute_new_verts(verts, vertexFaceMap, face_points, olded
             }
             F.scale(1.0 / n);
         }
-        else
-            console.log("huhadjfaces");
         // average of edgepoints of all edges this vertex is on
         const edges = vertexEdgeMap.get(str);
         let R = new Vec3();
         if (edges != undefined) {
             for (let e = 0; e < edges.length; e++) {
                 const curr_edge = oldedge_edgepoint.get(edges[e]);
-                console.log("edges: ", edges);
-                console.log("looking for: ", edges[e]);
-                console.log(oldedge_edgepoint.entries());
                 if (curr_edge != undefined)
                     R.add(curr_edge);
-                else
-                    console.log("huhedge");
             }
             R.scale(1.0 / edges.length);
         }
-        else
-            console.log("huhedges");
         let new_vert = new Vec3();
         vec.scale(n - 3, new_vert);
         R.scale(2);
@@ -914,10 +889,6 @@ export function catmullClarkSubdivision(mesh, iterations, adj) {
             const v2_str = adj.faces[f][1];
             const v3_str = adj.faces[f][2];
             const v4_str = adj.faces[f][3];
-            const v1 = oldvert_newvert.get(v1_str);
-            const v2 = oldvert_newvert.get(v2_str);
-            const v3 = oldvert_newvert.get(v3_str);
-            const v4 = oldvert_newvert.get(v4_str);
             const edges = adj.faceEdgeMap.get(f);
             let e12 = '';
             let e23 = '';
@@ -925,69 +896,79 @@ export function catmullClarkSubdivision(mesh, iterations, adj) {
             let e41 = '';
             if (edges != undefined) {
                 // find which edge is edge between v1 and v2
-                if (edges[0].includes(v1_str) && edges[0].includes(v2_str))
+                if (edges[0] == v1_str + '=>' + v2_str || edges[0] == v2_str + '=>' + v1_str)
                     e12 = edges[0];
-                else if (edges[1].includes(v1_str) && edges[0].includes(v2_str))
+                else if (edges[1] == v1_str + '=>' + v2_str || edges[1] == v2_str + '=>' + v1_str)
                     e12 = edges[1];
-                else if (edges[2].includes(v1_str) && edges[2].includes(v2_str))
+                else if (edges[2] == v1_str + '=>' + v2_str || edges[2] == v2_str + '=>' + v1_str)
                     e12 = edges[2];
-                else if (edges[3].includes(v1_str) && edges[3].includes(v2_str))
+                else if (edges[3] == v1_str + '=>' + v2_str || edges[3] == v2_str + '=>' + v1_str)
                     e12 = edges[3];
-                else
-                    console.log("huhe12");
                 // find which edge is edge between v2 and v3
-                if (edges[0].includes(v2_str) && edges[0].includes(v3_str))
+                if (edges[0] == v2_str + '=>' + v3_str || edges[0] == v3_str + '=>' + v2_str)
                     e23 = edges[0];
-                else if (edges[1].includes(v2_str) && edges[0].includes(v3_str))
+                else if (edges[1] == v2_str + '=>' + v3_str || edges[1] == v3_str + '=>' + v2_str)
                     e23 = edges[1];
-                else if (edges[2].includes(v2_str) && edges[2].includes(v3_str))
+                else if (edges[2] == v2_str + '=>' + v3_str || edges[2] == v3_str + '=>' + v2_str)
                     e23 = edges[2];
-                else if (edges[3].includes(v2_str) && edges[3].includes(v3_str))
+                else if (edges[3] == v2_str + '=>' + v3_str || edges[3] == v3_str + '=>' + v2_str)
                     e23 = edges[3];
-                else
-                    console.log("huhe23");
                 // find which edge is edge between v3 and v4
-                if (edges[0].includes(v3_str) && edges[0].includes(v4_str))
+                if (edges[0] == v3_str + '=>' + v4_str || edges[0] == v4_str + '=>' + v3_str)
                     e34 = edges[0];
-                else if (edges[1].includes(v3_str) && edges[0].includes(v4_str))
+                else if (edges[1] == v3_str + '=>' + v4_str || edges[1] == v4_str + '=>' + v3_str)
                     e34 = edges[1];
-                else if (edges[2].includes(v3_str) && edges[2].includes(v4_str))
+                else if (edges[2] == v3_str + '=>' + v4_str || edges[2] == v4_str + '=>' + v3_str)
                     e34 = edges[2];
-                else if (edges[3].includes(v3_str) && edges[3].includes(v4_str))
+                else if (edges[3] == v3_str + '=>' + v4_str || edges[3] == v4_str + '=>' + v3_str)
                     e34 = edges[3];
-                else
-                    console.log("huhe34");
                 // find which edge is edge between v1 and v2
-                if (edges[0].includes(v4_str) && edges[0].includes(v1_str))
+                if (edges[0] == v1_str + '=>' + v4_str || edges[0] == v4_str + '=>' + v1_str)
                     e41 = edges[0];
-                else if (edges[1].includes(v4_str) && edges[0].includes(v1_str))
+                else if (edges[1] == v1_str + '=>' + v4_str || edges[1] == v4_str + '=>' + v1_str)
                     e41 = edges[1];
-                else if (edges[2].includes(v4_str) && edges[2].includes(v1_str))
+                else if (edges[2] == v1_str + '=>' + v4_str || edges[2] == v4_str + '=>' + v1_str)
                     e41 = edges[2];
-                else if (edges[3].includes(v4_str) && edges[3].includes(v1_str))
+                else if (edges[3] == v1_str + '=>' + v4_str || edges[3] == v4_str + '=>' + v1_str)
                     e41 = edges[3];
-                else
-                    console.log("huhe41");
             }
-            else
-                console.log("huhedgesconnect");
             // make new face 1 (using v1, e12, curr_facepoint, and e41)
             const curr_facepoint_str = `${curr_facepoint.x},${curr_facepoint.y},${curr_facepoint.z}`;
-            new_faces.push([v1_str, e41, curr_facepoint_str, e12]);
-            catmullclark_make_newface(v1_str, e12, curr_facepoint_str, e41, curr_face_index, new_edgeFaceMap, new_vertexFaceMap, new_faceEdgeMap, new_vertexEdgeMap);
-            curr_face_index++;
-            // make new face 2 (using e12, curr_facepoint, e23, and v2)
-            new_faces.push([e12, curr_facepoint_str, e23, v2_str]);
-            catmullclark_make_newface(e12, v2_str, e23, curr_facepoint_str, curr_face_index, new_edgeFaceMap, new_vertexFaceMap, new_faceEdgeMap, new_vertexEdgeMap);
-            curr_face_index++;
-            // make new face 3 (using e41, v4, e34, and curr_facepoint)
-            new_faces.push([e41, v4_str, e34, curr_facepoint_str]);
-            catmullclark_make_newface(e41, curr_facepoint_str, e34, v4_str, curr_face_index, new_edgeFaceMap, new_vertexFaceMap, new_faceEdgeMap, new_vertexEdgeMap);
-            curr_face_index++;
-            // make new face 4 (using curr_facepoint, e34, v3, and e23)
-            new_faces.push([curr_facepoint_str, e34, v3_str, e23]);
-            catmullclark_make_newface(curr_facepoint_str, e23, v3_str, e34, curr_face_index, new_edgeFaceMap, new_vertexFaceMap, new_faceEdgeMap, new_vertexEdgeMap);
-            curr_face_index++;
+            const edgepoint12 = oldedge_edgepoint.get(e12);
+            const edgepoint23 = oldedge_edgepoint.get(e23);
+            const edgepoint34 = oldedge_edgepoint.get(e34);
+            const edgepoint41 = oldedge_edgepoint.get(e41);
+            const new_v1 = oldvert_newvert.get(v1_str);
+            const new_v2 = oldvert_newvert.get(v2_str);
+            const new_v3 = oldvert_newvert.get(v3_str);
+            const new_v4 = oldvert_newvert.get(v4_str);
+            if (edgepoint12 != undefined && edgepoint23 != undefined && edgepoint34 != undefined && edgepoint41 != undefined &&
+                new_v1 != undefined && new_v2 != undefined && new_v3 != undefined && new_v4 != undefined) {
+                const edgepoint12_str = `${edgepoint12.x},${edgepoint12.y},${edgepoint12.z}`;
+                const edgepoint23_str = `${edgepoint23.x},${edgepoint23.y},${edgepoint23.z}`;
+                const edgepoint34_str = `${edgepoint34.x},${edgepoint34.y},${edgepoint34.z}`;
+                const edgepoint41_str = `${edgepoint41.x},${edgepoint41.y},${edgepoint41.z}`;
+                const new_v1_str = `${new_v1.x},${new_v1.y},${new_v1.z}`;
+                const new_v2_str = `${new_v2.x},${new_v2.y},${new_v2.z}`;
+                const new_v3_str = `${new_v3.x},${new_v3.y},${new_v3.z}`;
+                const new_v4_str = `${new_v4.x},${new_v4.y},${new_v4.z}`;
+                // make new face 1 (using new_v1, e12, curr_facepoint, e41)
+                new_faces.push([new_v1_str, edgepoint12_str, curr_facepoint_str, edgepoint41_str]);
+                catmullclark_make_newface(new_v1_str, edgepoint12_str, curr_facepoint_str, edgepoint41_str, curr_face_index, new_edgeFaceMap, new_vertexFaceMap, new_faceEdgeMap, new_vertexEdgeMap);
+                curr_face_index++;
+                // make new face 2 (using e12, curr_facepoint, e23, and new_v2)
+                new_faces.push([edgepoint12_str, new_v2_str, edgepoint23_str, curr_facepoint_str]);
+                catmullclark_make_newface(edgepoint12_str, new_v2_str, edgepoint23_str, curr_facepoint_str, curr_face_index, new_edgeFaceMap, new_vertexFaceMap, new_faceEdgeMap, new_vertexEdgeMap);
+                curr_face_index++;
+                // make new face 3 (using e41, new_v4, e34, and curr_facepoint)
+                new_faces.push([edgepoint41_str, curr_facepoint_str, edgepoint34_str, new_v4_str]);
+                catmullclark_make_newface(edgepoint41_str, curr_facepoint_str, edgepoint34_str, new_v4_str, curr_face_index, new_edgeFaceMap, new_vertexFaceMap, new_faceEdgeMap, new_vertexEdgeMap);
+                curr_face_index++;
+                // make new face 4 (using curr_facepoint, e34, new_v3, and e23)
+                new_faces.push([curr_facepoint_str, edgepoint23_str, new_v3_str, edgepoint34_str]);
+                catmullclark_make_newface(curr_facepoint_str, edgepoint23_str, new_v3_str, edgepoint34_str, curr_face_index, new_edgeFaceMap, new_vertexFaceMap, new_faceEdgeMap, new_vertexEdgeMap);
+                curr_face_index++;
+            }
         }
         adj.edgeFaceMap = new_edgeFaceMap;
         adj.faceEdgeMap = new_faceEdgeMap;
@@ -995,6 +976,10 @@ export function catmullClarkSubdivision(mesh, iterations, adj) {
         adj.vertexEdgeMap = new_vertexEdgeMap;
         adj.vertexFaceMap = new_vertexFaceMap;
         adj.verts = new_verts;
+        removeDuplicatesFromMap(adj.edgeFaceMap);
+        removeDuplicatesFromMap(adj.faceEdgeMap);
+        removeDuplicatesFromMap(adj.vertexEdgeMap);
+        removeDuplicatesFromMap(adj.vertexFaceMap);
     }
     catmullclark_remake_mesh_positions(adj, mesh);
 }
@@ -1038,8 +1023,6 @@ function catmullclark_remake_mesh_positions(adj, mesh) {
                 new_normals.push(normal.x, normal.y, normal.z);
             }
         }
-        else
-            console.log("huhabcd");
     }
     mesh.geometry.position.values = new Float32Array(new_positions);
     mesh.geometry.position.count = new_positions.length / 3;

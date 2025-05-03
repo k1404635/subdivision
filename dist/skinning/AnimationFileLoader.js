@@ -1,4 +1,5 @@
 import { ColladaLoader } from "../lib/threejs/examples/jsm/loaders/ColladaLoader.js";
+import { FileLoader } from "../lib/threejs/build/three.module.js";
 import { Vec3 } from "../lib/tsm/Vec3.js";
 import { Mat4 } from "../lib/TSM.js";
 import { Quat } from "../lib/tsm/Quat.js";
@@ -177,7 +178,7 @@ class CLoader {
         this.skinnedMeshes = [];
         this.meshes = [];
     }
-    load(callback, iterations, quadmesh) {
+    load(callback, iterations, quadmesh, obj_location) {
         this.loader.load(this.fileLocation, (collada) => {
             console.log("File loaded successfully");
             collada.scene.updateWorldMatrix(true, true);
@@ -192,8 +193,16 @@ class CLoader {
                 loopSubdivision(this.meshes[0], iterations, adj);
             }
             else {
-                const adj2 = new catmullclark_adjacency_data(this.meshes[0]);
-                catmullClarkSubdivision(this.meshes[0], iterations, adj2);
+                const fileLoader = new FileLoader();
+                let flatVertexArray = [];
+                fileLoader.load(obj_location, (response) => {
+                    flatVertexArray = this.parseObjVertexPositions(response);
+                    const adj2 = new catmullclark_adjacency_data(flatVertexArray);
+                    catmullClarkSubdivision(this.meshes[0], iterations, adj2);
+                    callback();
+                }, undefined, (error) => {
+                    console.error('Error loading OBJ file:', error);
+                });
             }
             // getting the images
             let lib = collada.library;
@@ -238,6 +247,34 @@ class CLoader {
             console.error("Loading collada file failed");
             console.error(event);
         });
+    }
+    parseObjVertexPositions(objText) {
+        const lines = objText.split('\n');
+        const vertices = [];
+        const quadsFlat = [];
+        for (const line of lines) {
+            if (line.startsWith('v ')) {
+                const [, xStr, yStr, zStr] = line.trim().split(/\s+/);
+                const x = parseFloat(xStr);
+                const y = parseFloat(yStr);
+                const z = parseFloat(zStr);
+                vertices.push([x, y, z]);
+            }
+        }
+        for (const line of lines) {
+            if (line.startsWith('f ')) {
+                const parts = line.trim().split(/\s+/).slice(1);
+                if (parts.length !== 4)
+                    continue; // Skip non-quads
+                for (const part of parts) {
+                    const vertexIndexStr = part.split('/')[0];
+                    const vertexIndex = parseInt(vertexIndexStr, 10);
+                    const [x, y, z] = vertices[vertexIndex - 1];
+                    quadsFlat.push(x, y, z);
+                }
+            }
+        }
+        return quadsFlat;
     }
     findSkinnedMeshes(element) {
         if (this.scene == null) {
