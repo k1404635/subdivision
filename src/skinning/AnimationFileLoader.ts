@@ -235,7 +235,7 @@ class CLoader {
     this.meshes = [];
   }
 
-  public load(callback: Function, iterations: number): void {
+  public load(callback: Function, iterations: number, quadmesh: boolean): void {
     this.loader.load(this.fileLocation, (collada: Collada) => {
       console.log("File loaded successfully");
       collada.scene.updateWorldMatrix(true, true);
@@ -246,10 +246,13 @@ class CLoader {
         this.meshes.push(new Mesh(new MeshLoader(m)));
       });
 
-      const adj = new loopsubdiv_adjacency_data(this.meshes[0]);
-      loopSubdivision(this.meshes[0], iterations, adj); 
-      // const adj2 = new catmullclark_adjacency_data(this.meshes[0]);
-      // catmullClarkSubdivision(this.meshes[0], iterations, adj2);    
+      if(!quadmesh) {
+        const adj = new loopsubdiv_adjacency_data(this.meshes[0]);
+        loopSubdivision(this.meshes[0], iterations, adj); 
+      } else {
+        const adj2 = new catmullclark_adjacency_data(this.meshes[0]);
+        catmullClarkSubdivision(this.meshes[0], iterations, adj2);
+      }
 
       // getting the images
       let lib = collada.library as any;

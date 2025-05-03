@@ -204,7 +204,7 @@ export class SkinningAnimation extends CanvasAnimation {
     setScene(fileLocation) {
         this.loadedScene = fileLocation;
         this.scene = new CLoader(fileLocation);
-        this.scene.load(() => this.initScene(), this.gui.subdivision_iter);
+        this.scene.load(() => this.initScene(), this.gui.subdivision_iter, this.gui.quadmesh);
     }
 }
 export function initializeCanvas() {

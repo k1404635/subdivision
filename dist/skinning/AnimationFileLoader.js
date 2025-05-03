@@ -3,7 +3,7 @@ import { Vec3 } from "../lib/tsm/Vec3.js";
 import { Mat4 } from "../lib/TSM.js";
 import { Quat } from "../lib/tsm/Quat.js";
 import { Mesh } from "../skinning/Scene.js";
-import { loopsubdiv_adjacency_data, loopSubdivision } from "./Subdivision.js";
+import { loopsubdiv_adjacency_data, loopSubdivision, catmullclark_adjacency_data, catmullClarkSubdivision } from "./Subdivision.js";
 export class AttributeLoader {
     constructor(values, count, itemSize) {
         this.values = values;
@@ -177,7 +177,7 @@ class CLoader {
         this.skinnedMeshes = [];
         this.meshes = [];
     }
-    load(callback, iterations) {
+    load(callback, iterations, quadmesh) {
         this.loader.load(this.fileLocation, (collada) => {
             console.log("File loaded successfully");
             collada.scene.updateWorldMatrix(true, true);
@@ -187,10 +187,14 @@ class CLoader {
             this.skinnedMeshes.forEach(m => {
                 this.meshes.push(new Mesh(new MeshLoader(m)));
             });
-            const adj = new loopsubdiv_adjacency_data(this.meshes[0]);
-            loopSubdivision(this.meshes[0], iterations, adj);
-            // const adj2 = new catmullclark_adjacency_data(this.meshes[0]);
-            // catmullClarkSubdivision(this.meshes[0], iterations, adj2);    
+            if (!quadmesh) {
+                const adj = new loopsubdiv_adjacency_data(this.meshes[0]);
+                loopSubdivision(this.meshes[0], iterations, adj);
+            }
+            else {
+                const adj2 = new catmullclark_adjacency_data(this.meshes[0]);
+                catmullClarkSubdivision(this.meshes[0], iterations, adj2);
+            }
             // getting the images
             let lib = collada.library;
             let mats = lib.materials;
